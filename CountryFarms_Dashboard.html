@@ -1,0 +1,3745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Country Farms — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<style>
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green-900: #0d3320;
+  --green-800: #1a5c38;
+  --green-700: #1f7244;
+  --green-600: #2d8f56;
+  --green-500: #3aad69;
+  --green-200: #a8dbb8;
+  --green-100: #d6efdf;
+  --green-50:  #f0faf3;
+
+  --blue-800:  #0f3460;
+  --blue-600:  #1a5fa8;
+  --blue-400:  #3b82c4;
+  --blue-100:  #d0e8f7;
+  --blue-50:   #eef6fd;
+
+  --sand-100:  #faf7f2;
+  --sand-200:  #f0ebe0;
+  --sand-300:  #ddd4c2;
+
+  --ink:       #141c14;
+  --ink-2:     #2e3a2e;
+  --ink-3:     #4a5e4a;
+  --ink-4:     #7a8f7a;
+  --ink-5:     #a8baa8;
+
+  --red-500:   #c0392b;
+  --red-100:   #fde8e6;
+  --amber-500: #d97706;
+  --amber-100: #fef3c7;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-sm: 0 1px 3px rgba(13,51,32,.06), 0 1px 2px rgba(13,51,32,.04);
+  --shadow-md: 0 4px 16px rgba(13,51,32,.08), 0 2px 6px rgba(13,51,32,.05);
+  --shadow-lg: 0 8px 32px rgba(13,51,32,.12), 0 4px 12px rgba(13,51,32,.07);
+
+  --font-display: 'Lora', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+
+  --sidebar-w: 220px;
+  --header-h:  64px;
+}
+
+html { font-size: 15px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--sand-100);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Layout ───────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: var(--header-h) 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  min-height: 100vh;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--green-900);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.sidebar-brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.sidebar-brand p {
+  font-size: .72rem;
+  color: var(--green-200);
+  margin-top: 3px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sidebar-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: var(--ink-5);
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-label {
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-5);
+  padding: 10px 8px 4px;
+  font-weight: 500;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  color: var(--green-200);
+  font-family: var(--font-body);
+  font-size: .82rem;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background .15s, color .15s;
+}
+
+.nav-btn:hover { background: rgba(255,255,255,.07); color: #fff; }
+.nav-btn.active { background: var(--green-700); color: #fff; font-weight: 500; }
+
+.nav-btn svg { opacity: .7; flex-shrink: 0; }
+.nav-btn.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: .7rem;
+  color: var(--ink-5);
+  line-height: 1.5;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.topbar {
+  grid-area: header;
+  background: rgba(250,247,242,.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--sand-300);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 16px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--sand-200);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle button {
+  padding: 5px 14px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: .78rem;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all .15s;
+  font-weight: 400;
+}
+
+.view-toggle button.active {
+  background: var(--green-800);
+  color: #fff;
+  font-weight: 500;
+}
+
+.month-select {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--sand-300);
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+}
+
+.month-select:focus { border-color: var(--green-600); }
+
+.refresh-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--green-200);
+  background: var(--green-50);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .78rem;
+  color: var(--green-700);
+  cursor: pointer;
+  transition: all .15s;
+  font-weight: 500;
+}
+.refresh-btn:hover { background: var(--green-100); }
+.refresh-btn.loading svg { animation: spin 1s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green-500);
+  box-shadow: 0 0 0 2px rgba(58,173,105,.25);
+}
+.status-dot.offline { background: var(--amber-500); }
+.status-dot.error   { background: var(--red-500); }
+
+/* ── Main content ─────────────────────────────────────────── */
+main {
+  grid-area: main;
+  padding: 24px 28px 48px;
+  overflow-y: auto;
+}
+
+/* ── Connection banner ────────────────────────────────────── */
+.conn-banner {
+  background: var(--amber-100);
+  border: 1px solid #f6d860;
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: .82rem;
+  line-height: 1.6;
+  color: #78450a;
+}
+
+.conn-banner.connected {
+  background: var(--green-50);
+  border-color: var(--green-200);
+  color: var(--green-800);
+}
+
+.conn-banner.hidden { display: none; }
+
+.conn-banner strong { font-weight: 500; }
+
+.conn-banner code {
+  background: rgba(0,0,0,.07);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: .78rem;
+  font-family: monospace;
+}
+
+/* ── Section label ────────────────────────────────────────── */
+.section-label {
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-4);
+  font-weight: 500;
+  margin: 24px 0 10px;
+}
+.section-label:first-child { margin-top: 0; }
+
+/* ── KPI grid ─────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.kpi-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s, transform .2s;
+}
+
+.kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--accent, var(--green-600));
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.kpi-icon {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--icon-bg, var(--green-50));
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+
+.kpi-label {
+  font-size: .72rem;
+  color: var(--ink-4);
+  margin-bottom: 4px;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: -.02em;
+}
+
+.kpi-sub {
+  font-size: .72rem;
+  color: var(--ink-4);
+  margin-top: 5px;
+}
+
+.kpi-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .7rem;
+  font-weight: 500;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.kpi-change.up   { background: var(--green-50);  color: var(--green-700); }
+.kpi-change.down { background: var(--red-100);   color: var(--red-500); }
+.kpi-change.flat { background: var(--amber-100); color: var(--amber-500); }
+
+/* ── Chart cards ──────────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.charts-row.three { grid-template-columns: 2fr 1fr 1fr; }
+
+.chart-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chart-card-title {
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .72rem;
+  color: var(--ink-3);
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── P&L card ─────────────────────────────────────────────── */
+.pnl-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pnl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--sand-200);
+  font-size: .84rem;
+}
+.pnl-row:last-child { border-bottom: none; }
+
+.pnl-label { color: var(--ink-3); }
+.pnl-value { font-weight: 500; font-family: var(--font-display); font-size: .9rem; }
+
+.pnl-row.section-total {
+  font-weight: 500;
+  color: var(--ink);
+  padding: 10px 0;
+  font-size: .88rem;
+}
+
+.pnl-row.net-profit .pnl-label,
+.pnl-row.net-profit .pnl-value {
+  font-size: .98rem;
+  font-weight: 600;
+  color: var(--green-700);
+}
+.pnl-row.net-loss .pnl-label,
+.pnl-row.net-loss .pnl-value { color: var(--red-500); }
+
+.pnl-divider {
+  height: 1px;
+  background: var(--sand-300);
+  margin: 4px 0;
+}
+
+/* ── Livestock grid ───────────────────────────────────────── */
+.livestock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.livestock-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.livestock-num {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.livestock-label {
+  font-size: .7rem;
+  color: var(--ink-4);
+  margin-top: 5px;
+  line-height: 1.3;
+}
+
+/* ── Feed table ───────────────────────────────────────────── */
+.feed-table {
+  width: 100%;
+  font-size: .8rem;
+  border-collapse: collapse;
+}
+
+.feed-table th {
+  text-align: left;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-4);
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--sand-200);
+  font-weight: 500;
+}
+
+.feed-table td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--sand-200);
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+
+.feed-table tr:last-child td { border-bottom: none; }
+.feed-table td:last-child { text-align: right; font-weight: 500; }
+
+/* ── Receivables table ────────────────────────────────────── */
+.mini-table {
+  width: 100%;
+  font-size: .78rem;
+  border-collapse: collapse;
+}
+
+.mini-table th {
+  text-align: left;
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-4);
+  padding: 0 6px 8px;
+  border-bottom: 1px solid var(--sand-200);
+  font-weight: 500;
+}
+
+.mini-table td {
+  padding: 7px 6px;
+  border-bottom: 1px solid var(--sand-200);
+  color: var(--ink-2);
+}
+
+.mini-table tr:last-child td { border-bottom: none; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: .66rem;
+  font-weight: 500;
+}
+
+.badge.paid    { background: var(--green-50); color: var(--green-700); }
+.badge.partial { background: var(--amber-100); color: var(--amber-500); }
+.badge.unpaid  { background: var(--red-100); color: var(--red-500); }
+
+/* ── Yearly month grid ────────────────────────────────────── */
+.yr-month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.yr-month-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .18s;
+  box-shadow: var(--shadow-sm);
+}
+
+.yr-month-card:hover {
+  border-color: var(--green-400);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.yr-month-card.active-month {
+  border-color: var(--green-600);
+  background: var(--green-50);
+}
+
+.yr-month-name { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-4); }
+.yr-month-rev  { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--ink); margin-top: 5px; }
+.yr-month-net  { font-size: .72rem; font-weight: 500; margin-top: 3px; }
+.yr-month-net.pos { color: var(--green-600); }
+.yr-month-net.neg { color: var(--red-500); }
+
+/* ── Daily sales table ────────────────────────────────────── */
+.daily-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--sand-200);
+}
+
+.daily-table {
+  width: 100%;
+  font-size: .76rem;
+  border-collapse: collapse;
+  min-width: 500px;
+}
+
+.daily-table th {
+  background: var(--green-900);
+  color: rgba(255,255,255,.85);
+  padding: 9px 10px;
+  text-align: center;
+  font-size: .66rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.daily-table th:first-child { text-align: left; }
+
+.daily-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--sand-200);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.daily-table td:first-child { text-align: left; font-weight: 500; color: var(--ink); }
+
+.daily-table tr:last-child td { border-bottom: none; }
+
+.daily-table tr:nth-child(even) td { background: var(--sand-100); }
+
+.daily-table .weekend td {
+  background: #fff8f0;
+  color: var(--ink-3);
+}
+
+.daily-table .total-row td {
+  background: var(--green-50);
+  font-weight: 600;
+  color: var(--green-800);
+  border-top: 2px solid var(--green-200);
+}
+
+/* ── Setup instructions panel ─────────────────────────────── */
+.setup-panel {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.setup-panel h2 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.setup-panel p {
+  font-size: .83rem;
+  color: var(--ink-3);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.step-list { display: flex; flex-direction: column; gap: 14px; margin: 20px 0; }
+
+.step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-body { flex: 1; }
+.step-body strong { font-weight: 500; font-size: .85rem; display: block; margin-bottom: 3px; }
+.step-body p { font-size: .8rem; color: var(--ink-3); margin: 0; line-height: 1.6; }
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.url-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 12px;
+  border: 1px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .8rem;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.url-input:focus { border-color: var(--green-600); }
+.url-input::placeholder { color: var(--ink-5); }
+
+.btn-primary {
+  padding: 9px 18px;
+  background: var(--green-800);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+
+.btn-primary:hover { background: var(--green-700); }
+
+.btn-secondary {
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--green-700);
+  border: 1px solid var(--green-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.btn-secondary:hover { background: var(--green-50); }
+
+/* ── Views ────────────────────────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp .35s ease both;
+}
+
+.fade-up:nth-child(1) { animation-delay: .03s; }
+.fade-up:nth-child(2) { animation-delay: .07s; }
+.fade-up:nth-child(3) { animation-delay: .11s; }
+.fade-up:nth-child(4) { animation-delay: .15s; }
+.fade-up:nth-child(5) { animation-delay: .19s; }
+.fade-up:nth-child(6) { animation-delay: .23s; }
+
+/* ── Loading skeleton ─────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--sand-200) 25%, var(--sand-100) 50%, var(--sand-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .layout { grid-template-columns: 1fr; grid-template-areas: "header" "main"; }
+  .charts-row, .charts-row.three { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  main { padding: 16px; }
+  .topbar { padding: 0 16px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Admin lock overlay ───────────────────────────────────── */
+.lock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 51, 32, 0.72);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+
+.lock-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.lock-card {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 36px 40px 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 24px 64px rgba(13,51,32,.28), 0 4px 16px rgba(0,0,0,.12);
+  transform: translateY(16px) scale(.97);
+  transition: transform .25s ease, opacity .22s ease;
+  position: relative;
+}
+
+.lock-overlay.visible .lock-card {
+  transform: translateY(0) scale(1);
+}
+
+.lock-icon {
+  width: 52px; height: 52px;
+  background: var(--green-900);
+  border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.lock-card h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.lock-card p {
+  font-size: .8rem;
+  color: var(--ink-4);
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.lock-field {
+  margin-bottom: 14px;
+}
+
+.lock-field label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 6px;
+}
+
+.lock-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: .9rem;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.lock-field input:focus {
+  border-color: var(--green-600);
+  box-shadow: 0 0 0 3px rgba(45,143,86,.12);
+}
+
+.lock-error {
+  font-size: .75rem;
+  color: var(--red-500);
+  text-align: center;
+  min-height: 18px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  animation: shake .3s ease;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+
+.lock-submit {
+  width: 100%;
+  padding: 11px;
+  margin-top: 8px;
+  background: var(--green-800);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: .88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  letter-spacing: .02em;
+}
+
+.lock-submit:hover  { background: var(--green-700); }
+.lock-submit:active { transform: scale(.98); }
+
+.lock-cancel {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  background: none;
+  color: var(--ink-4);
+  border: none;
+  font-family: var(--font-body);
+  font-size: .78rem;
+  cursor: pointer;
+  transition: color .15s;
+}
+.lock-cancel:hover { color: var(--ink-2); }
+
+/* Lock badge on nav item */
+.nav-lock-badge {
+  margin-left: auto;
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.1);
+  flex-shrink: 0;
+  transition: background .15s;
+}
+
+.nav-btn:hover .nav-lock-badge,
+.nav-btn.active .nav-lock-badge {
+  background: rgba(255,255,255,.2);
+}
+
+/* Logout button inside customers view header */
+.admin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.admin-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--green-700);
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+  border-radius: 20px;
+  padding: 4px 10px 4px 7px;
+}
+
+.logout-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .75rem;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all .15s;
+}
+.logout-btn:hover { background: var(--red-100); border-color: var(--red-500); color: var(--red-500); }
+
+
+/* ══════════════════════════════════════════════════════════
+   ALERTS VIEW
+══════════════════════════════════════════════════════════ */
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+/* Base alert card */
+.alert-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--sand-200);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .15s;
+  position: relative;
+}
+.alert-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+/* Urgency colour bands injected via JS */
+.alert-card.urgency-safe   { border-color: #86efac; }
+.alert-card.urgency-low    { border-color: #fde68a; }
+.alert-card.urgency-medium { border-color: #fb923c; }
+.alert-card.urgency-high   { border-color: #ef4444; }
+
+.alert-stripe {
+  height: 5px;
+  width: 100%;
+}
+.urgency-safe   .alert-stripe { background: #22c55e; }
+.urgency-low    .alert-stripe { background: #eab308; }
+.urgency-medium .alert-stripe { background: #f97316; }
+.urgency-high   .alert-stripe { background: #ef4444; }
+
+.alert-body { padding: 16px 18px 14px; }
+
+.alert-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.alert-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.urgency-safe   .alert-icon-wrap { background: #dcfce7; }
+.urgency-low    .alert-icon-wrap { background: #fef9c3; }
+.urgency-medium .alert-icon-wrap { background: #ffedd5; }
+.urgency-high   .alert-icon-wrap { background: #fee2e2; }
+
+.alert-title {
+  font-family: var(--font-display);
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  flex: 1;
+}
+
+.alert-urgency-pill {
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.urgency-safe   .alert-urgency-pill { background: #dcfce7; color: #166534; }
+.urgency-low    .alert-urgency-pill { background: #fef9c3; color: #854d0e; }
+.urgency-medium .alert-urgency-pill { background: #ffedd5; color: #9a3412; }
+.urgency-high   .alert-urgency-pill { background: #fee2e2; color: #991b1b; }
+
+.alert-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.alert-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .78rem;
+}
+.alert-meta-label { color: var(--ink-4); }
+.alert-meta-value { font-weight: 500; color: var(--ink-2); }
+.alert-meta-value.highlight { color: var(--red-500); font-weight: 600; }
+
+/* Progress bar for quantity alerts */
+.alert-progress-wrap {
+  margin: 10px 0 4px;
+}
+.alert-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: .72rem;
+  color: var(--ink-4);
+  margin-bottom: 5px;
+}
+.alert-progress-bar {
+  height: 8px;
+  background: var(--sand-200);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.alert-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .4s ease, background .4s ease;
+}
+
+/* Input / action row */
+.alert-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sand-200);
+  flex-wrap: wrap;
+}
+
+.alert-input {
+  flex: 1;
+  min-width: 80px;
+  padding: 6px 10px;
+  border: 1px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .8rem;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+}
+.alert-input:focus { border-color: var(--green-600); }
+
+.alert-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.alert-btn.primary {
+  background: var(--green-800);
+  color: #fff;
+}
+.alert-btn.primary:hover { background: var(--green-700); }
+.alert-btn.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.alert-btn.danger:hover { background: #fecaca; }
+.alert-btn.neutral {
+  background: var(--sand-200);
+  color: var(--ink-2);
+}
+.alert-btn.neutral:hover { background: var(--sand-300); }
+
+/* Bill date pickers */
+.alert-date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.alert-date-group label {
+  display: block;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-4);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.alert-date-group input[type="date"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: .78rem;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+}
+.alert-date-group input[type="date"]:focus { border-color: var(--green-600); }
+
+/* Days countdown chip */
+.days-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+.days-chip.safe   { background: #dcfce7; color: #166534; }
+.days-chip.low    { background: #fef9c3; color: #854d0e; }
+.days-chip.medium { background: #ffedd5; color: #9a3412; }
+.days-chip.high   { background: #fee2e2; color: #991b1b; }
+
+/* Summary bar at top of alerts view */
+.alerts-summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.alerts-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font-size: .78rem;
+  box-shadow: var(--shadow-sm);
+}
+.alerts-summary-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.alerts-summary-dot.high   { background: #ef4444; }
+.alerts-summary-dot.medium { background: #f97316; }
+.alerts-summary-dot.low    { background: #eab308; }
+.alerts-summary-dot.safe   { background: #22c55e; }
+
+/* ══════════════════════════════════════════════════════════
+   EMPLOYEE IDs VIEW
+══════════════════════════════════════════════════════════ */
+.emp-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.emp-count-badge {
+  background: var(--green-50);
+  border: 1px solid var(--green-200);
+  color: var(--green-800);
+  font-size: .75rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.emp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.emp-card {
+  background: #fff;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .15s;
+  display: flex;
+  flex-direction: column;
+}
+.emp-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.emp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--sand-200);
+}
+
+.emp-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--green-800);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .03em;
+}
+
+.emp-name-block { flex: 1; min-width: 0; }
+.emp-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.emp-designation {
+  font-size: .75rem;
+  color: var(--ink-4);
+  margin-top: 1px;
+}
+
+.emp-id-chip {
+  font-size: .65rem;
+  font-weight: 700;
+  background: var(--green-50);
+  color: var(--green-800);
+  border: 1px solid var(--green-200);
+  border-radius: 20px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.emp-card-body {
+  padding: 14px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.emp-field {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: .8rem;
+}
+.emp-field-label {
+  min-width: 90px;
+  color: var(--ink-4);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-weight: 500;
+  padding-top: 1px;
+  flex-shrink: 0;
+}
+.emp-field-value {
+  color: var(--ink-2);
+  font-weight: 400;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* CNIC image section */
+.emp-cnic-section {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sand-200);
+}
+.emp-cnic-label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-4);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.emp-cnic-imgs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.emp-cnic-img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--sand-200);
+  background: var(--sand-100);
+}
+.emp-cnic-placeholder {
+  width: 100%;
+  height: 80px;
+  border: 1.5px dashed var(--sand-300);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  color: var(--ink-5);
+  font-style: italic;
+}
+
+.emp-card-footer {
+  padding: 10px 18px 14px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--sand-200);
+}
+
+/* Add employee modal */
+.emp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(13,51,32,.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.emp-modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+.emp-modal {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 28px 32px 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(14px) scale(.97);
+  transition: transform .22s ease;
+}
+.emp-modal-overlay.visible .emp-modal { transform: translateY(0) scale(1); }
+
+.emp-modal h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+
+.emp-form-field {
+  margin-bottom: 14px;
+}
+.emp-form-field label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 5px;
+}
+.emp-form-field input,
+.emp-form-field select,
+.emp-form-field textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: .85rem;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+  resize: vertical;
+}
+.emp-form-field input:focus,
+.emp-form-field textarea:focus { border-color: var(--green-600); }
+
+.emp-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.emp-form-hint {
+  font-size: .72rem;
+  color: var(--ink-4);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.emp-form-hint a { color: var(--green-700); }
+
+.emp-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sand-200);
+}
+
+/* Empty state */
+.emp-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink-4);
+}
+.emp-empty svg { opacity: .25; margin-bottom: 14px; }
+.emp-empty p { font-size: .88rem; margin-top: 6px; }
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ───────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABGCAYAAABv59I3AAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAAAhD0lEQVR42s2cd5xc1Xn3v+fcMnfq9r7qq8KqIUSRBAiQDUgYhFyAYGNDHBeECcSOY/IGF+IQYucNSRziNx/H2JgQiAOGGINB2HTTJYSEBCqod2l3Z3dndtot5+SPOzO7KwmQBM6b+/ncnZ1yzz33d57n99R7BaD5fW8ChBAgBDpQH2woQ4LWaA3hn9/71H9/AAkpANBq9Cni9UmSrSkSLSmiDXHslIMZtZCWBED5iqDo42aKFPpyDB3Mkj0wSK43ix4x3Xcb/389QEKKUZN2Eg7NJ7XTNLOdmq4GnJYYZtzGtE0sw8SSFqYwkSK8YKUVvg7wlIcX+ASej5/zKPUUyGxLc+jNfRx8ey+Fwfy7nvN/JUAjJykQtM0ew9izuqib3oTdGCUacWiw6uiIttCRaKMt3ky9U0vCTuCYNoY0AAhUQNEvkXVzpAv9HMj1sCe3n72FA6TdAQpeES9dYuDtHnb9bgt739iJLqvbhw3UhwKQECIcRGsM02DiOdMYf/5UYuOTRJ0o46IdzG7oZkbTNDpr2klFEhiGgdYapRVKK7TWVfURCIQQSCGRQiKEIAgCMqUsuwf3sb5nI2t732ZnYR9Ft0hhR5Ydv93I1mc3EvhByHdQBe3/K0AjV2ziwqlMXTabyNg4tVaK0xpmc/bYM5jcMAHHcvCVjxt4BCpAl09eAaQ6G4ZnVAGs8lspJBHTxpQWRa/A5t7tPL/rZVb1vcmgn6W0K8fGh9aw/YXNH5o0nThAIrwsrTX14xuZc/UCUjMbSRgxzm2bz4WTzqUj1YavfIpBCaU1AlHlmRPZTGniBi4akELgmA6mMNiT2ccTW57l2f0vk1MFBtf0sPpnLzKwJx2CpPUJi8EJATRyZaZfegpTLz8ZERHMaziFy6cvZWxtJyW/SCnwPjAolU1rzYGhQ3Sk2lBalck8VMuIYRMxI+zs38V/vvUrXk2vQRcCNty7mo0r3hymgRNQOQO45UTAseMRzv7ahYy9eAr1Zg3XzvwcV8y8lJjlkPPyaHSVP44XiIp0jvzMsRzufP1e6qI1tKda8QMfKULwAx1Q9IvUOTWcPW4e7ZFmNg9sIzW3ica2Rva9sQvlB6FboH+PAFXASbXVsujbS4l113JyvJs/P+t6pjVNJuvmUFqFwHD8UqO0wjYsDCEJlKqCq9BE7ShvHdrE+oMbWDhhASW/VP0+lFJJoALcwGVyw0TmdcxlZ89usu0u406eyP43duPmSscNkjxecOonNPHRW5dhtjtc0v5Rbj7nRpKRBFk3ixTiuCWmsvkqIBFJcHCol19uWIFt2qOcQjQ4ZoS3e94hW8hgCHmEJ12xfBk3S42T4psL/4SLWs8jMiHBR29dRk1HHVrpqoP5oQFUBWd8I+d952J0QnD1lMv4/NxPU/CLeIGPIQwsaY0y18ekUoSmvsZJsXNgN7c99wNaE02Y0hj2bQClAvZnD5DO9bEzs49ILI42raOrhTBwA49iUOILp17FZ7s+gay3WPSXS48bJHms4CRbajjnmx9DReEL3Z9m2fQlZEpZKJOw1pqDQz1ELQdDGFUifT9wBIKYFeWJd57mhkdv5uS26Zwz8Uxybh4pJEorHDPC7sG9rD+0Gd+JsuHQJsTu7fg9e0BKEEdeRsUwZEtZPjHjYv5w2uWQkpz7rYuJNyRCkI5B2t+bg8pkaUVtFn1nKbLJ5nNTPsnS7sVkihkMYZTNoMY0TLald/LCzteYWD+OmB3FC7x3nUQFHMuw+Onq+/jRyns4b+JZXH/G5ym4hbILocqhiMk/r/wZh/p20D44RMe6VUyPN6N69+C/9htk1yyEaR9hkCsOZ9EvMqttOoYvWVfczJgZ49n+/Ga0UiOcrxMASEiJ1pqzbjyf5Ix6PtaxiM+c/CkypSyGMEZNJFCKCQ3j2J89xA9fvYsZLSdRH63DUyNAUirkDR2+xs0od676dx5c/wintc/mprOuQ6FRhomwo1hRh6LW/L9X7+J3+9cyaajEt3aX6JpwCtasBahiHtF1MrKu+b3VREhKfok57TMZzAywI7Kf+uYGdr28tZodOG4VC1VLMW3xLJrO6mRmfCrXzLmCIXfoqH6NFIJMMcv5U86hKd7Ad576PplSFsuwhrkknoR4Eh1PEUumuH/Hczy043nqG8dyzcJrsRMJPED37UdvXEX/Kyu44+6v8NLqh3G0YKh3D84ZF9D4+VuQpkWQHUR2zQbDet/UhxCCnJvj83OvZHp0Mq3njGPqBTPRgXpPPjqqBI0052d8fRE1ZpL/c+YfEzEjBEq9h+OnMYVJKpLg4Y1PkCllOWvs6aEUGSb+q48TrHkOtr/FwJa1rHjxbsy+Qyy0Wljo2mRfeRyx6knEtnXITB9GbpA5RDnfT3JaOsdCo46m869C1DRg1LVgpeop/u5XyIkz3x8gBEorDGEwo3kaz29/hdrpTex9ZTulTPFdzf9RPekKQOf9xcXUndLC9TOu4bwJZ5JxR6vW0XjFEAY5N883n/oeewb38WdnLmfh1LMYeOYholJgd5+GKuZRmTRGbgjpFxGAZ1rIxnZUYwdWqv4YnKYApIG3eTX5Pduxzv0kOpdFS/GePligA1KRJE9t+R0/fPtuBtf08PStj7xr3Ga+GzhjT5tI3SnNzK2dyTkT5pN1h94TnGEuCqh1UnSk2tg9uJf/2vgEc1q7sbJpnKVfOEKv9w/m0GgaahKhQaj4RW4JKeVwJlJKRDmeoyLBnos15RTMbW8R7N2GbO7EDAKC97CghjDIloY4b+KZvLx3FW/MeZvx87vY8fKWo4Ikj3T1QRqSky6bgyMdrpi+lEAF78v21YUtW7SOZCuWtNiZO8gLax8j0TI+5KIgCFOmQYDyfbz+Q3z505fTXlfHjKlTuOOOO0in05h2BGlaaCER0kAiEEIOgyMNsOzwomNJ1L6tSNsmnUujtHofTz4MT66YfikRLLovOwXDMo6qpaM4SMiQ0cfP76Lzosksaj2TC7rOIecVQs/1GF2/iGmzL3uQ1XvXYDlxsrve5rxJC5AtY8oXJ8NzCUFtXR1LLrqIgcFBnnrqaR555BHuvfdeBgcH6erqora2Fq2P9FlKLz+G+/rTFFc/g5cdxJ53ESXf5a7VP+eU9pkYhvGehO0qn/ZUCwcGDrHLOoh7oEB6e88RVk0eHigKIZi4pJukGWfxpPNwfRd5nHFVoAJak82Y0gQEfnGIwIrg+z5BEKCUqr4C1NXVccUVVzBz5kwsy2Lv3r1897vfZc6cObzyyitorQmCIHQPlCLzk1vIb30bf8JMWHApctlyosl63jqwgVLgknKSBEq9j4cscH2PJV2LiAmHSUu6kVKWfaOjqFjI4pqmKa0kumqZUzedcXWdlAL3uOIrIQS+8mlPtpCKJHADj7i0sTvGYpomhmUhpcQwDAzD4NChQyxdupT58+ezcuVKPC/0myKRCH19fdx+++3liQcgJO6a5/AROFd9HWP6GejWsUQ0BJ7HA289wvTmqUhpvG+4I4SgFJSYUD+Wk+umEx2fonVGJ2hGmX3zcIM27uzJRKIRFo6Zd0zhwtGI2lM+9dE62pOtHBjYiu1EeeLhR9nYn2XShPG0t3fQ39+P4zgsX76cdevWYRgGSpVTr1rjui5SSn7zm9+we/duxowZgwbcLW8iZp1F4PvYxRLxSIx+d5Afr7qTXYN7OaV91nFJvdKahWPn8Vr/GsafO4V9b+46uhXTSmFFLBpmtdARaWVa02SKfgl5zNwz+qQR02Zy4yTWpTdz992v8M2XfvbulsUwQhUa8b6yytlsli996Us8+uivkYZEDfSSGtONFiZ78nt5bfMantn+AjsGdnNq+8m0J1twj1HqpZAU/SLdzVNoizSTn5HDSUYpZgtVB8gcadqbprRiN8eYWX8S8UiMTGnoOMh5tCwGQcDscTP46SP/xjsvbcYwDIQQVSmpZPgqCflRHHbY+z27d4eWKTuI67usyu3kd2v/nc1928iUhohbUSJGhFM7ZhMxbUolF+MYaSHQilQkwcz6k9iZ30vrjI7Q5JfnJytBKUDzzHYcx2Fm0zQCFXCiiVIpJEW3wOTGidgDRrnqofF9vwrQyNfqcWW/5+qrr2b58uU4jsM999zDc88/j2mayN3beKjnTb6/8qes3beOQAfUOEkQUBtNcXrnnLLUi+NaTKUUs5pPwjYtmmd2HKliFeau6WqkzkoxrrYT9z0i8WPImxLYDinTYlpqAk/q0MPWKKQoS9hR8ugS8LXmG3/2dbqnz+D666+nu7u7amFzW9ewNiaoMaPYtiQgHCTvFlg04Szaki1kS0PHRQtCCNzAZXztGGrMFDUT6zFMg8APqtYONMRSMaJtcdqizdQ6qbIEnQhAGkwLf90LgKazYSJSgFmunQUa/KOAY5omvtIsuvBjTJ0+Ax/o7u4mCAL8IKx1vbPlVQ40NmJ6LkE5XeIrnxonxUVTPkrJd497UcMxAmqjNbQ5TdhNURKNqREZyjIIidYazGSEjlgblmGhTqROohXCdlB7t1C8+ZOov7uWiJ9HaSh6Po4huXFyih+f2sD0GrsqNVIIfN9nQUuCOy6dQd/dt8KerSilkFphGgYDv/ox/+EfQMRTEISLJ6Uk6w5x2YxL6KxpC12SE8mFo7ENi454G0bMJNlWU9U/syJBieYUZsSkLd48qoZ3vKqFaaL2bsVE0//Mf7HMTtB4RiPP95S4fEyMjzTbKA078gEbMx5ChrmkM+eexvIbF3GHt49vnnEjped/SezyG8C0GHzpEb731oNs6uoi4XpgmPiBz2Ahw9JpF3LRlI8yVMqdkEEZubXFm5GWQbK15kgzH2uMY5omDdG6E/J/Ri+JAq1QTpyUX+RTHQ5XjIky5GsKgebO7Tn++u2BstoJtIavfv0mGj7ShXruPlqnzWXo0F7cPe8QKRR47Z0XWd/RRoOvyauAopujxknxhbmf4ZJpF1DyS8Mx2gkWB5VWNMTqMKRBtCF+JEB2jYMlTZJ2ogzQCZxQSLTnYUycgWhohVwG3zAZ8MJEvtYQdwxihhxl0qN2lNNPP5Uhv0h7vD7MFze0onMZSk/9guSYdvShrWS0pjXRxBmdc/nIpLMZk2pnyMuNLl+fIERKK1J2ElOY2KnIsEJUkYrZmNLEsSLlMvGJlaMpFpBjuzBOuwD/8bsRyToMEVoE3zCwlGZdfylclIiNXywx5pxJpDrqsIYKJJ0UfqARkSiGbbOrOEC7cxIn101k0ZxLmdvSTW20hpLvknWHTsiRPXpSLCxOmtLAjFlVg1Md3bANDCSWNMM45gNWi0U0EQaXhgQp0UIQzfbzmlD8aE+OMePGceq8M4haDtf88ed5fONTtCSacEybol9EaLBiSfYFORKRON8644t8pGsBEcMiUxrCC7wPBZyRgbolTSQSaRnh2HpkNC8qfz4oMgL8AOP0C8G0oZBHF3LoUhFz4ccZuPF72M2N5ItZdvTupnPsGP58yZ/Ql+mnt9BXLkLmsTwPjaBrzGycSIKgmCVTyBNohXECJe3jkSaBqAasphACwzSQSIQIUxVaa9SIXsJqiXfEpN51glKii3nMuedif+GvCJ66D1HbjDxzKcYlf8g5RY9m49ts69/JQDZD0k6QHcywcOJ8Xt+7joQdI10cwPHyRA5sI9U4BkwLKUB7LsKyT6g3cWTjQuX/kZ8pqUPfr1zvl0ISEGCqQKFQ9BzooakwiKtdnKiDrW2klIcZJ3XEXom+w5OFRCyEgOwg5ie/AoaBTO9HJWoIPB8LH2mZaFfR0dbJrp27+NFTP+PLS/+IocIQmVKGYnEI3dRB7+onaI8347klnFgSf2gwJG/fe9cLF2VNEGJ4l1KO2A3kYVUMpRRSSkoDLv2FAXoO9OCVzyHOPXehXrToI2T9HKWoz4TUGGqjNQhDErEjOE6EaDRKNBojHo8RjcaIxWI4joPjONi2jWVZmKZ5hFRpNMVf/DPBtvVoK0LQ2EHNpV/k7l/+mldeepEr/+BKEskEda0N1CZTxMwYPblebDNCjRWj9Nt7ELEUonUcRrYPuuZgNLYjAh9ZDn6reevDpMX3fTzPw3VdisUixWKBfL5APp8nn89TKOQpFAoUiyVKbgkdKPrzg+zI7sZxLZIizuMrHkecduqp+rWVK6uDe65LrjxALpcnlxsil82Qz+XJF/IUC0VKbgnP81BBgBYSaRiYpolt20QiEaJOlGgsRtSJEDUlTk09kUQS2y9hWDY19Q1EbLu6+soP8MuqbUoTpRWBVmjPQwmBEhK/kCdA4LslXM+jVCpRLBYpFAoUCnny+QLFYnjBnueWA+NQogzDwLIsbDtCNOoQi4WLHI/HicXixONxotEo8Vgcyx62YFOmTAkt3PPPP8eCBWdWS8jHs3lAIZOhUCiQz+fI5fLkczly+Vy4Qq6LWyziuS6BDpsQAs8P0xfllZeynN6q9DoCQmu0KNeqtEKUJUVKiWkYmJaFbds4jlO9uHg8TiweJxaLlaU+imVZx3c9vocQkl88cD9XXvnp0A96+umnOfvshfi+z8gEGkIQDPSQX3EPupAf9lYFCGlAqUD0vE+R6ppFKpU6btI8gstUpcp5GHcYxgna1uEeRx34jPTuBBohzbITNFwUkCJMBz/88MMhhwF6/vx5vPTSS8MEWwkXpGTgu5+l9MR9iLrmsFg3nPZDDfaR/IufEF/82XLQNzosE6IM9IiuMXGCPUR6xMJpMaI2Vhm/LGGCw/pBAz8EvFrlKKcSRFhaRwWIchtNJYHX29vLtGlT6etLhxL0xhtr2LJlK11dXVVGp2zB/C3rcBZfRfJP/jGsaVUtmwAdIKIJVCZN5p++hr/5DTDCSgaBh336BaS+8n3yj/8b+Ud/Sv3fPx46kIC3dR0D3/k0tX/9AP6ODWR/eDPxq79B/GPXgFYEfQdIf/1iUtf/bVjeefJ+RKoeEY2DW0S7JUCTuvku8v9xO/72t0etjojGSVz3fayJM+i/6VLMMZOpuelfwffBtMj8+Fu4L6+g9q/vx2ybEJ4zUBiGwYoVj9PXl8YwDKRhGBSLRZ588rdVk3dYwhhMG5msQ9Y2IlP15b0OWdOIsB2Kzz5IacW/Y0yYjjlhOuaEbozWceTv+zu8HRuhkCN4Zy2oESpcyuNvXg+lAnqgB71zA7kffJXiqqfCmK6YJ9jyJnqgF9k8BrNrFkbnJIJ31oQO3MQZmBOmI2yHYPMacEvhucdOxZw0E7VvO7kffxsZTxG75I8o3P9jhv7jdjAtCk/dT/5Ht+Is+lQITrliUrGIDzzwQFXKq4z82GOPce21y8u+z4gu5hHtKpV6+HCk6YNpovNZRG0Ttd/+N0SZ5P3d71B65Ql0MQd2BBGJjfbShURE7ep4oqUN2dRJ5parMH+6EpmoRUSi6MAn/vHlxD++HOW79CztJHrRNcSWfbmsQgGqmCN6yR+RuPrm6vAD3/siwZawwzV64VW4b75I7l+/hYinyP/kL7HPvYj4VTdVqaSiObt37+aZZ56tcqSsSMyLL77IwYMHkVKiRtWnRRkcVd6D8l7+X5fLwCpAD/ShPTfcs/0hsNIYBjkIQlADf3iMciOCkCapb96FsCwGb/kMQbY/5IbKsSpAZwfCsnUxHx4f+OCXkLEUxcfuJv2Vc+n/2hL6b7oU9+lfIOpbquMnr/0bjPHdDP39H4MVIfWnPxxF2RUcHn30EbLZbPVOAKm1RkpJOt3Piy++cBQ104iIE6qaZYccY5jhe9sJyTIIJUvUNSEsO9xrGsLWuCqJGohUffV4kagts3j4nS7msCdMJ/Xdn+O//SrZ268HK1KVNqQR7kKMfl+5TNNGOHG8t17FXfkk1hkXkLzue9XFlclaEstvA6WJX3MzZtv4EOAyp1aihgcffGiUEQnLPkICirVr1/KJT3xylBkSdgR39bNkfvhn4YCVCFpI9NAAsctuQNQ0oAZ6yN7xp1CxCIO94LlgWWDZ6IEesv/0tTKJg+o/BL4Xgh74oBRqsI/IzAUkvvoDhv7+hqMHzp472ppKAzXYi7PkcySvvY3iKyvI/OXnEKYd8ksFYK0xmjsBjdE8ZtjMlq2XlJLe3l7Wrl07qtpijjSivb29R9jp2Ge+Qe5HN1N6+sHRrUSGgRroxZ63BGfhMopP/pzSsw9WASDwcS75Q6xxJ2HUNFI8/XxKz/wi/L7MZ87SL2COnYL7xrOI5o4QXKWIX/plggO7KD5yV9XqVXsmG9sRscTwHNGIpvbQummFM28x8m9/yeC3r2TwH26k5hv/EuJQdjpFY3u58XO4Yapi3tPpPrLZzJEuhmGYGtBf+9pXtdZae56nR27K97Qq5rVyi1qVRu4Frfzh31Z/44bfHb6pYr56jCrmhz/3XK3c4ogfBuFLIaeV5474XIVjeG71N+HvhoaPD/zyEL4OMmmtlRo+Pgh0kM+OmnP4cTjWjh3bdTwe14AWQmhAj5KgSZMmHTW/LCq8817JeiEQkejoQ4cG0IUhtFIY9a3V77Xvhf+XLYgwTFQ+gxrowWjqrKoE0ig7cWWrWnYQK45dcHA3SBEeM0LlUAohDUSy7ohUjBwpkYelblpb2+js7GDTps3VyqohhLhFa41pmtx661/R2to6Ot9TIdL3SpCJkS5B+Nugbz/9f74M1XcAb9NqrPHTkPEk/r7t9F41A9nQijV5dtjr8/rTDN72eVTffvKP/ASr+3RkspbBv72Wwop7iH7kcgDS37gUb8NKnPlLyP7kFkqv/obS2t+B1phjJ4eAV5qsKnM+3GsfwT0jAQqCAMuy2LhxIytXrgw7SrRGVpCaPn06M2bMqBLWUUE42v5uvwt8yA/hnPMJohd8GpmqByHJP/jPOIsuo/TsQ6ihgTApkssgbYf4p24g2L0Zv+y/4JXwtqxj8B9uYPD26wl2bET4bgjqS79G2BFS195GZN7iYek52sIdPsf32C677HKEGLbksgLGhRdegGGYRzQOnPBWnmzh6QfIr7gHlR8iSB+k+MwvcM75BKr/EPlH7wrjJNNC5QbJ/OONiNomnLMuCRfbLZG68XZEPIVsbCdx3W2ofFjFqP/Bb0Fp0l9dTGnVU8Nx2YlOt4zD/PnzmTbtpKqgyAogS5Zc9N6p1OO+O8VD+x6p6/8vNdd9H6OhleyPbsbqPgN/23oi85ZQeORO1NAg2neR8Vrq/uYh8LwwJAB0No1OHyT1pVtJXv0XqJ69oWcOlF59gtgf3Ig5birFFfeUHdoTB0iUq7u2bfPxjy+rgmYAt4wbN5bbbvsbLMs64Wj7SDEOUxjW5Nlhntor4e3cSPKL3yUy5xzskxeG9bd4CtnUiZIGVvfpmCedirt1Hfbsswl8F2PCDGRDG6BRvo+sa8aaPBtv23qKT/4nRlMnic/ehIwl312tjiMFI6Wkvr6OO+/8SahmQgh99dWf01pr7fu+fr9NKaWVUjoIguru+351D4JAq5Gm9X9oq8zp8LlU9sq8j3WcU0+dG5p5rTWLFy8mCIIq/+ij3Id1eP73WKTML5VwgwDXdfFcF7dUxPMDPN8n8H18z0VVEmflVIpWKryB1zTDxoZy9tAwTCzTwDJNbMfBMkxs28K2bMxI5Lgkf2Sx4WhqZlkWy5YtY9Wq1xFNTY16w4YNNDQ0HltK0vPI5/P096TJZrIUigX6MmmKhQKu64ZgeD6qGg4MZwYNQ1aT+4ZhYprGiAsT5S60YQuilMb3vWpHrO8HqHLuOvxMV304KQ0sK8yL27aNE43SkKon6kRJppLUNdUTi8WOOQX7zjvvMHv2LMwFCxZQLJZYv349mcwg/f0D9Pen6etL09fXRzrdRzqdJp1OMzAwwMBAWBqavGwmXlwzv20ul8+5FGlJjIhJIhYvVzsi1WqHUU7qjyyxfLDeCFVtJa5ULypJ/Fw+R+D6KC/g56t/yav7V2MXDd55eD22Mqmpq6W2ppb6+jrq6+tpaGigoaGB+vp66uvrqa2to6YmRU1NDfPnz0fU19dr3/fJ53P4/rGb+JaZHZz5p+cTb6thQd0cPjfrcmKRKMVSMZQAPZx3Nk2T/v5+7rvvXlKpFIVCgYsvvoRx48axatVKhoaGUEoza9Ys6urqePTRR1mwYAG1tbWsWrWKXG6IxsZG+vr6SKVqmDVrFqp8T2tVAkVodZyIQ66U5+619/NK/xvkDw7x4j/8lgNrdh/ztZmmQTweD6U8nU4fwTUjeSZU0yMrkQfX7eWxG/6T05efS/a0DKv3ruPKaZdy9vh5IE0KXqE6hmma5PN53nprPaeeehrZbJbHHvs1QRAwduxYdu/eQz6f58wzz8QwDDZt2sgpp5yCbdv09fXx0ksv0tU1mUIhTzqdpqWlmc7OMbiuG1pCDTEritKapzY8z883/pJeNUD/qoO89i/PUhjMj5LaYa4SZad7+PrCmlrA4GCmfG+HELdUQBlZJR1utFRHfK51eM+nX/TY+eIWyGqik5K8nl3HxgNbaXBq6Ui1YxsWnvJBQLFYJB5PsGTJEhYvXkwymeD111/nuuu+QiRi0909nXQ6TTKZ5ODBg7z22mts2bKF0047jTFjxjBx4kQ2bdpIY1MjJ8+Zgywn4eNWDMswWXdgA//6xj38eu/T5LI5Nt37BqvuegG/5FW7eI+8jqNVh0cLygd7NMWIpy8km1PM/IPTaZrXiRONMDM1jY+OO5uZrdOIWTF8HYAR1p08z8OyLKJONMzemWGjm+/7SCmxLCssTJbVSBqySswRO4IpTAwkOTfPuoMbeHLH86zLbMItufS8spc3f/4a2YODH8ozPD6ch5uMuI2oeUobU5fOou7kFiLxCGOj7cxtmsXJLTMYk2onHomF3fhB+OgbRNjdVbmHtfKQlIpLIZEYUpbv+4BcKc+uwb2sObie13vWsau4DzdXon/tITb96k0Obdp3xJw+eO/Qh9E2UibKyqTqxzcx8bypNJ7STqQlRjwSo81pZmJyLBNrxtGRbKUhWkfCjmMbNoaU5cxmeDNvoAJKgUfOzdGX72dvdj9bM7vYlt3JgWIPuVKe0qECvav3sf2ZTfRtPzTinpMP58kvHypAo26KYRgoOxqhdUYHLXM6qZnSQKQ5hh2L4NgOcTNKwowTM6NEjUj5hr2wtbeoSuT9AkN+jpxfoOgV8XIupZ48g5v7OPDGHg6s34ObLx31vB9mv9Dv5flWh0tUxZlLtdVQO7aeZGct0ZYEkdooZtxC2gbCKF9koFFugJ/zcAeK5A8Nkd0zwOCuNJn9A6MyDh+2xPyPATTyDO/3gDcpJIZlIMvNnSpQBF7wrt22ww9607/3R9T9N+Q+pjju13YdAAAAAElFTkSuQmCC" alt="Country Farms Logo" style="width:64px;height:auto;display:block;margin: 0 auto 10px;border-radius:50%;">
+      <h1 style="text-align:center">Country Farms</h1>
+      <p style="text-align:center">Dairy Farm Dashboard</p>
+    </div>
+
+    <div class="sidebar-location">
+      <svg width="9" height="11" viewBox="0 0 9 11" fill="none">
+        <path d="M4.5 0C2.3 0 0.5 1.8 0.5 4c0 2.8 4 7 4 7s4-4.2 4-7c0-2.2-1.8-4-4-4z" fill="#3aad69"/>
+        <circle cx="4.5" cy="4" r="1.4" fill="#0d3320"/>
+      </svg>
+      Lahore, Punjab, PK
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Overview</div>
+      <button class="nav-btn active" onclick="switchNav(this,'monthly')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+        Monthly View
+      </button>
+      <button class="nav-btn" onclick="switchNav(this,'yearly')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="2" width="12" height="11" rx="1.5"/><path d="M4 1v2M10 1v2M1 6h12"/></svg>
+        Yearly View
+      </button>
+      <button class="nav-btn" onclick="switchNav(this,'daily')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1h12v12H1z" rx="1"/><path d="M1 5h12M5 5v8"/></svg>
+        Daily Log
+      </button>
+      <button class="nav-btn" onclick="switchNav(this,'alerts')" id="navAlerts">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M7 1.5C4.5 1.5 2.5 3.5 2.5 6v3.5L1 11h12l-1.5-1.5V6C11.5 3.5 9.5 1.5 7 1.5z" stroke-linejoin="round"/><path d="M5.5 11a1.5 1.5 0 0 0 3 0"/><circle cx="10.5" cy="3.5" r="2" fill="#ef4444" stroke="none" id="alertDot" style="display:none"/></svg>
+        Alerts
+        <span id="alertBadge" style="display:none;margin-left:auto;background:#ef4444;color:#fff;font-size:.62rem;font-weight:700;border-radius:10px;padding:1px 6px;line-height:1.6;">0</span>
+      </button>
+
+      <div class="nav-label">Management</div>
+      <button class="nav-btn" onclick="switchNav(this,'customers')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="4" r="2.5"/><path d="M1 12c0-2.2 1.8-4 4-4s4 1.8 4 4"/><circle cx="11" cy="5" r="1.8"/><path d="M11 8.5c1.4 0 2.5 1.1 2.5 2.5"/></svg>
+        Customers
+        <span class="nav-lock-badge" id="navLockBadge">
+          <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+            <rect x="1" y="4.5" width="7" height="5" rx="1" fill="currentColor" opacity=".7"/>
+            <path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+      </button>
+      <button class="nav-btn" onclick="switchNav(this,'employees')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="2" width="12" height="10" rx="1.5"/><circle cx="5" cy="6" r="1.8"/><path d="M2 10c0-1.5 1.3-2.5 3-2.5s3 1 3 2.5"/><path d="M9 5h2M9 7.5h2"/></svg>
+        Employee IDs
+        <span class="nav-lock-badge" id="navEmpLockBadge">
+          <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+            <rect x="1" y="4.5" width="7" height="5" rx="1" fill="currentColor" opacity=".7"/>
+            <path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+      </button>
+      <button class="nav-btn" onclick="switchNav(this,'setup')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.9 2.9l1.4 1.4M9.7 9.7l1.4 1.4M2.9 11.1l1.4-1.4M9.7 4.3l1.4-1.4"/></svg>
+        Setup & Connect
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      Country Farms &bull; 20 Kanal<br>
+      Dairy Farm &bull; Lahore, PK
+    </div>
+  </aside>
+
+  <!-- ── Top bar ────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="page-title" id="pageTitle">Monthly Overview</span>
+    </div>
+    <div class="topbar-right">
+      <div id="monthSelectorWrap">
+        <select class="month-select" id="monthSelect" onchange="onMonthChange()">
+          <option value="0">January</option><option value="1">February</option>
+          <option value="2">March</option><option value="3">April</option>
+          <option value="4">May</option><option value="5">June</option>
+          <option value="6">July</option><option value="7">August</option>
+          <option value="8">September</option><option value="9">October</option>
+          <option value="10">November</option><option value="11">December</option>
+        </select>
+      </div>
+      <!-- Year switcher — driven by DASHBOARD_CONFIG.activeYear -->
+      <div class="view-toggle" id="yearToggle">
+        <button id="yt-2026" onclick="switchYear(2026)">2026</button>
+        <button id="yt-2027" onclick="switchYear(2027)">2027</button>
+      </div>
+      <div class="view-toggle">
+        <button id="vt-monthly" class="active" onclick="setViewToggle('monthly')">Monthly</button>
+        <button id="vt-yearly"  onclick="setViewToggle('yearly')">Yearly</button>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadFromSheets()">
+          Refresh data
+      </button>
+      <div class="status-dot" id="statusDot" title="Not connected to Google Sheets"></div>
+    </div>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────── -->
+  <main>
+
+    <!-- CONNECTION BANNER -->
+    <div class="conn-banner" id="connBanner">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+        <circle cx="8" cy="8" r="7" stroke="#d97706" stroke-width="1.4"/>
+        <path d="M8 5v4M8 10.5v.5" stroke="#d97706" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span>
+        <strong>Not connected to Google Sheets.</strong>
+        Go to <strong>Setup &amp; Connect</strong> in the sidebar to link your live spreadsheet.
+        Paste your published Google Sheets CSV URL there — the dashboard will pull live data automatically.
+        All figures show zero until connected.
+      </span>
+    </div>
+
+    <!-- ══ MONTHLY VIEW ══════════════════════════════════════ -->
+    <div class="view active" id="view-monthly">
+
+      <div class="section-label">Financial summary — <span id="monthLabel">January 2026</span></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="section-label" style="margin-top:22px">Revenue &amp; cost breakdown</div>
+      <div class="charts-row three">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Daily revenue trend</span>
+          </div>
+          <div class="chart-legend" id="trendLegend"></div>
+          <div style="position:relative;height:180px">
+            <canvas id="trendChart" role="img" aria-label="Daily revenue vs expenses line chart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Cost breakdown</span>
+          </div>
+          <div class="chart-legend" id="costLegend"></div>
+          <div style="position:relative;height:150px">
+            <canvas id="costChart" role="img" aria-label="Cost breakdown donut"></canvas>
+          </div>
+        </div>
+        <div class="pnl-card">
+          <div class="chart-card-title" style="margin-bottom:12px">Profit &amp; loss</div>
+          <div id="pnlSummary"></div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px">Livestock &amp; milk production</div>
+      <div class="livestock-grid" id="livestockGrid"></div>
+
+      <div class="charts-row" style="margin-top:14px">
+        <div class="chart-card">
+          <div class="chart-card-header"><span class="chart-card-title">Feed consumption</span></div>
+          <table class="feed-table" id="feedTable">
+            <thead><tr><th>Feed type</th><th>Qty</th><th>Total cost</th><th>Rs/litre</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-header"><span class="chart-card-title">Milk production — morning vs evening</span></div>
+          <div style="position:relative;height:180px">
+            <canvas id="milkChart" role="img" aria-label="Morning vs evening milk production bar chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px">Customer payments — <span id="monthLabel2">January 2026</span></div>
+      <div class="chart-card">
+        <table class="mini-table" id="paymentTable">
+          <thead><tr><th>Customer</th><th>Litres</th><th>Amount due</th><th>Amount paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="section-label" style="margin-top:22px">Key performance indicators</div>
+      <div class="kpi-grid" id="kpiGrid2"></div>
+
+    </div>
+
+    <!-- ══ YEARLY VIEW ═══════════════════════════════════════ -->
+    <div class="view" id="view-yearly">
+
+      <div class="section-label">Annual summary — <span id="yrLabel">2026</span></div>
+      <div class="kpi-grid" id="yrKpiGrid"></div>
+
+      <div class="section-label" style="margin-top:22px">Revenue &amp; profit — all months</div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Monthly revenue vs net profit — <span id="yrChartLabel">2026</span></span>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#2d8f56"></div>Revenue</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1a5fa8"></div>Net profit</div>
+        </div>
+        <div style="position:relative;height:240px">
+          <canvas id="yrBarChart" role="img" aria-label="Monthly revenue and profit"></canvas>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:22px">Month-by-month</div>
+      <div class="yr-month-grid" id="yrMonthGrid"></div>
+
+    </div>
+
+    <!-- ══ DAILY LOG VIEW ════════════════════════════════════ -->
+    <div class="view" id="view-daily">
+      <div class="section-label">Daily sales log — <span id="dailyMonthLabel">January 2026</span></div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <span class="chart-card-title">Per-customer daily litres</span>
+          <span style="font-size:.72rem;color:var(--ink-4)">Source: <span id="logSheetName">Jun-Log</span></span>
+        </div>
+        <div class="daily-table-wrap">
+          <table class="daily-table" id="dailyTable">
+            <thead id="dailyTableHead"></thead>
+            <tbody id="dailyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CUSTOMERS VIEW ════════════════════════════════════ -->
+    <div class="view" id="view-customers">
+      <div class="admin-bar">
+        <div class="admin-badge">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <rect x="1" y="5" width="9" height="5.5" rx="1.2" fill="#2d8f56"/>
+            <path d="M3 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="#2d8f56" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+            <circle cx="5.5" cy="7.5" r=".8" fill="#fff"/>
+          </svg>
+          Admin session active
+        </div>
+        <button class="logout-btn" onclick="adminLogout()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+            <path d="M5 6h6M9 4l2 2-2 2"/><path d="M7 2H2v8h5"/>
+          </svg>
+          Lock &amp; exit
+        </button>
+      </div>
+      <div class="section-label">Customer overview</div>
+      <div class="kpi-grid" id="custKpiGrid"></div>
+      <div class="section-label" style="margin-top:22px">Customer list</div>
+      <div class="chart-card">
+        <table class="mini-table" id="custTable">
+          <thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Daily litres</th><th>Monthly litres</th><th>Monthly amount</th><th>Payment status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ ADMIN LOCK OVERLAY ═════════════════════════════════ -->
+    <div class="lock-overlay" id="lockOverlay" role="dialog" aria-modal="true" aria-label="Admin login required">
+      <div class="lock-card">
+        <div class="lock-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="11" width="18" height="12" rx="2.5" fill="#fff" opacity=".15"/>
+            <rect x="3" y="11" width="18" height="12" rx="2.5" stroke="#a8dbb8" stroke-width="1.6"/>
+            <path d="M7 11V7.5a5 5 0 0 1 10 0V11" stroke="#a8dbb8" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1.8" fill="#3aad69"/>
+            <path d="M12 17v2.5" stroke="#3aad69" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2>Admin access required</h2>
+        <p>This section contains confidential customer data.<br>Please sign in to continue.</p>
+        <div class="lock-field">
+          <label for="adminUser">Username</label>
+          <input type="text" id="adminUser" placeholder="Enter username" autocomplete="username"
+                 onkeydown="if(event.key==='Enter')document.getElementById('adminPass').focus()">
+        </div>
+        <div class="lock-field">
+          <label for="adminPass">Password</label>
+          <input type="password" id="adminPass" placeholder="Enter password" autocomplete="current-password"
+                 onkeydown="if(event.key==='Enter')submitLogin()">
+        </div>
+        <div class="lock-error" id="lockError">&nbsp;</div>
+        <button class="lock-submit" onclick="submitLogin()">Sign in</button>
+        <button class="lock-cancel" onclick="cancelLogin()">Cancel — go back</button>
+      </div>
+    </div>
+
+
+
+    <!-- ══ ALERTS VIEW ═══════════════════════════════════════ -->
+    <div class="view" id="view-alerts">
+
+      <!-- Summary bar -->
+      <div class="alerts-summary" id="alertsSummary"></div>
+
+      <div class="section-label" style="margin-bottom:14px">Farm alerts — all data saved locally in your browser</div>
+
+      <div class="alerts-grid">
+
+        <!-- ── ELECTRICITY BILL ────────────────────────────── -->
+        <div class="alert-card" id="card-elec">
+          <div class="alert-stripe"></div>
+          <div class="alert-body">
+            <div class="alert-header">
+              <div class="alert-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 2L4 10h6l-2 6 8-10h-6l2-6z"/>
+                </svg>
+              </div>
+              <div class="alert-title">Electricity Bill</div>
+              <span class="alert-urgency-pill" id="elec-pill">Safe</span>
+            </div>
+
+            <div class="alert-date-row">
+              <div class="alert-date-group">
+                <label>Issue date</label>
+                <input type="date" id="elec-issue" onchange="saveAlerts();renderAlerts()">
+              </div>
+              <div class="alert-date-group">
+                <label>Payment deadline</label>
+                <input type="date" id="elec-deadline" onchange="saveAlerts();renderAlerts()">
+              </div>
+            </div>
+
+            <div class="alert-meta" id="elec-meta"></div>
+
+            <div class="alert-actions">
+              <input type="number" class="alert-input" id="elec-amount" placeholder="Bill amount (Rs)" min="0">
+              <button class="alert-btn primary" onclick="setElecAmount()">Save amount</button>
+              <span id="elec-toggle-btn"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── INTERNET BILL ───────────────────────────────── -->
+        <div class="alert-card" id="card-net">
+          <div class="alert-stripe"></div>
+          <div class="alert-body">
+            <div class="alert-header">
+              <div class="alert-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                  <circle cx="9" cy="9" r="7"/>
+                  <path d="M9 2C9 2 6 5.5 6 9s3 7 3 7"/>
+                  <path d="M9 2c0 0 3 3.5 3 7s-3 7-3 7"/>
+                  <path d="M2 9h14"/>
+                  <path d="M3 5.5h12M3 12.5h12"/>
+                </svg>
+              </div>
+              <div class="alert-title">Internet Bill</div>
+              <span class="alert-urgency-pill" id="net-pill">Safe</span>
+            </div>
+
+            <div class="alert-date-row">
+              <div class="alert-date-group">
+                <label>Issue date</label>
+                <input type="date" id="net-issue" onchange="saveAlerts();renderAlerts()">
+              </div>
+              <div class="alert-date-group">
+                <label>Payment deadline</label>
+                <input type="date" id="net-deadline" onchange="saveAlerts();renderAlerts()">
+              </div>
+            </div>
+
+            <div class="alert-meta" id="net-meta"></div>
+
+            <div class="alert-actions">
+              <input type="number" class="alert-input" id="net-amount" placeholder="Bill amount (Rs)" min="0">
+              <button class="alert-btn primary" onclick="setNetAmount()">Save amount</button>
+              <span id="net-toggle-btn"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WANDA QUANTITY ──────────────────────────────── -->
+        <div class="alert-card" id="card-wanda">
+          <div class="alert-stripe"></div>
+          <div class="alert-body">
+            <div class="alert-header">
+              <div class="alert-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 16V8l6-6 6 6v8H3z"/>
+                  <path d="M7 16v-5h4v5"/>
+                </svg>
+              </div>
+              <div class="alert-title">Wanda (Feed) Stock</div>
+              <span class="alert-urgency-pill" id="wanda-pill">Safe</span>
+            </div>
+
+            <div class="alert-meta" id="wanda-meta"></div>
+
+            <div class="alert-progress-wrap">
+              <div class="alert-progress-label">
+                <span>Current stock</span>
+                <span id="wanda-qty-label">— kg</span>
+              </div>
+              <div class="alert-progress-bar">
+                <div class="alert-progress-fill" id="wanda-bar" style="width:100%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-4);margin-top:3px">
+                <span>0 kg</span>
+                <span id="wanda-max-label">Max</span>
+              </div>
+            </div>
+
+            <div class="alert-actions" style="flex-wrap:wrap;gap:8px">
+              <input type="number" class="alert-input" id="wanda-sub" placeholder="kg used today" min="0" style="min-width:120px">
+              <button class="alert-btn danger" onclick="subtractWanda()">Subtract used</button>
+              <input type="number" class="alert-input" id="wanda-set" placeholder="Set new qty (kg)" min="0" style="min-width:130px">
+              <button class="alert-btn primary" onclick="setWanda()">Update stock</button>
+              <button class="alert-btn neutral" onclick="clearWanda()" style="color:var(--red-500)">Clear all</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SILAGE QUANTITY ─────────────────────────────── -->
+        <div class="alert-card" id="card-silage">
+          <div class="alert-stripe"></div>
+          <div class="alert-body">
+            <div class="alert-header">
+              <div class="alert-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="9" cy="6" rx="6" ry="3"/>
+                  <path d="M3 6v6c0 1.7 2.7 3 6 3s6-1.3 6-3V6"/>
+                  <path d="M3 9c0 1.7 2.7 3 6 3s6-1.3 6-3"/>
+                </svg>
+              </div>
+              <div class="alert-title">Silage Stock</div>
+              <span class="alert-urgency-pill" id="silage-pill">Safe</span>
+            </div>
+
+            <div class="alert-meta" id="silage-meta"></div>
+
+            <div class="alert-progress-wrap">
+              <div class="alert-progress-label">
+                <span>Current stock</span>
+                <span id="silage-qty-label">— kg</span>
+              </div>
+              <div class="alert-progress-bar">
+                <div class="alert-progress-fill" id="silage-bar" style="width:100%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-4);margin-top:3px">
+                <span>0 kg</span>
+                <span id="silage-max-label">Max</span>
+              </div>
+            </div>
+
+            <div class="alert-actions" style="flex-wrap:wrap;gap:8px">
+              <input type="number" class="alert-input" id="silage-sub" placeholder="kg used today" min="0" style="min-width:120px">
+              <button class="alert-btn danger" onclick="subtractSilage()">Subtract used</button>
+              <input type="number" class="alert-input" id="silage-set" placeholder="Set new qty (kg)" min="0" style="min-width:130px">
+              <button class="alert-btn primary" onclick="setSilage()">Update stock</button>
+              <button class="alert-btn neutral" onclick="clearSilage()" style="color:var(--red-500)">Clear all</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MILK POUCHES ────────────────────────────────── -->
+        <div class="alert-card" id="card-pouches">
+          <div class="alert-stripe"></div>
+          <div class="alert-body">
+            <div class="alert-header">
+              <div class="alert-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2h6l1.5 3v10a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V5L6 2z"/>
+                  <path d="M6 2v3h6V2"/>
+                  <path d="M7 9h4M7 12h4"/>
+                </svg>
+              </div>
+              <div class="alert-title">Milk Pouches / Bags</div>
+              <span class="alert-urgency-pill" id="pouches-pill">Safe</span>
+            </div>
+
+            <div class="alert-meta" id="pouches-meta"></div>
+
+            <div class="alert-progress-wrap">
+              <div class="alert-progress-label">
+                <span>Pouches remaining</span>
+                <span id="pouches-qty-label">— pouches</span>
+              </div>
+              <div class="alert-progress-bar">
+                <div class="alert-progress-fill" id="pouches-bar" style="width:100%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-4);margin-top:3px">
+                <span>0</span>
+                <span id="pouches-max-label">Max</span>
+              </div>
+            </div>
+
+            <div class="alert-meta" style="margin-top:10px">
+              <div class="alert-meta-row">
+                <span class="alert-meta-label">Daily milk production</span>
+                <span class="alert-meta-value" id="pouches-daily-prod">— L</span>
+              </div>
+              <div class="alert-meta-row">
+                <span class="alert-meta-label">Days of stock remaining</span>
+                <span class="alert-meta-value" id="pouches-days-left">—</span>
+              </div>
+            </div>
+
+            <div class="alert-actions" style="flex-wrap:wrap;gap:8px">
+              <input type="number" class="alert-input" id="pouches-sub" placeholder="pouches used today" min="0" style="min-width:150px">
+              <button class="alert-btn danger" onclick="subtractPouches()">Subtract used</button>
+              <input type="number" class="alert-input" id="pouches-set" placeholder="Set new qty" min="0" style="min-width:130px">
+              <button class="alert-btn primary" onclick="setPouches()">Update stock</button>
+              <button class="alert-btn neutral" onclick="clearPouches()" style="color:var(--red-500)">Clear all</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ══ EMPLOYEE IDs VIEW ═════════════════════════════════ -->
+    <div class="view" id="view-employees">
+      <div class="admin-bar">
+        <div class="admin-badge">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <rect x="1" y="5" width="9" height="5.5" rx="1.2" fill="#2d8f56"/>
+            <path d="M3 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="#2d8f56" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+            <circle cx="5.5" cy="7.5" r=".8" fill="#fff"/>
+          </svg>
+          Admin session active
+        </div>
+        <button class="logout-btn" onclick="adminLogout()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+            <path d="M5 6h6M9 4l2 2-2 2"/><path d="M7 2H2v8h5"/>
+          </svg>
+          Lock &amp; exit
+        </button>
+      </div>
+
+      <div class="emp-toolbar">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="section-label" style="margin:0">Employee IDs</span>
+          <span class="emp-count-badge" id="empCount">0 employees</span>
+        </div>
+        <button class="btn-primary" onclick="openEmpModal()">+ Add employee</button>
+      </div>
+
+      <div class="emp-grid" id="empGrid">
+        <!-- Cards rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ── Add/Edit Employee Modal ──────────────────────────── -->
+    <div class="emp-modal-overlay" id="empModalOverlay">
+      <div class="emp-modal">
+        <h2 id="empModalTitle">Add Employee</h2>
+
+        <div class="emp-form-row">
+          <div class="emp-form-field">
+            <label>Full name *</label>
+            <input type="text" id="empName" placeholder="e.g. Ahmed Ali">
+          </div>
+          <div class="emp-form-field">
+            <label>Designation *</label>
+            <input type="text" id="empDesignation" placeholder="e.g. Milking Worker">
+          </div>
+        </div>
+
+        <div class="emp-form-field">
+          <label>Reference (who referred this employee)</label>
+          <input type="text" id="empReference" placeholder="e.g. Usman Khan — neighbour">
+        </div>
+
+        <div class="emp-form-row">
+          <div class="emp-form-field">
+            <label>Emergency contact name</label>
+            <input type="text" id="empContact2Name" placeholder="Contact person name">
+          </div>
+          <div class="emp-form-field">
+            <label>Emergency contact number</label>
+            <input type="tel" id="empContact2Phone" placeholder="03XX-XXXXXXX">
+          </div>
+        </div>
+
+        <div class="emp-form-field">
+          <label>CNIC ID card — front (Google Drive image URL)</label>
+          <input type="url" id="empCnicFront" placeholder="Paste Google Drive image link here">
+          <p class="emp-form-hint">
+            How to get the link: In Google Drive, right-click the photo →
+            Share → Anyone with the link → Copy link. Then paste it here.
+            The dashboard converts it to a direct image URL automatically.
+          </p>
+        </div>
+
+        <div class="emp-form-field">
+          <label>CNIC ID card — back (Google Drive image URL)</label>
+          <input type="url" id="empCnicBack" placeholder="Paste Google Drive image link here">
+        </div>
+
+        <div class="emp-form-field">
+          <label>Notes (optional)</label>
+          <textarea id="empNotes" rows="2" placeholder="Any additional info…"></textarea>
+        </div>
+
+        <div class="emp-modal-actions">
+          <button class="btn-primary" onclick="saveEmployee()" style="flex:1">Save employee</button>
+          <button class="btn-secondary" onclick="closeEmpModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETUP VIEW ════════════════════════════════════════ -->
+    <div class="view" id="view-setup">
+      <div class="setup-panel">
+        <h2>Connect to Google Sheets</h2>
+        <p>Follow these steps to connect your live Country Farms spreadsheet to this dashboard. Once connected, click "Refresh data" any time to pull the latest numbers.</p>
+
+        <div class="step-list">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>Import the spreadsheet into Google Sheets</strong>
+              <p>Go to <strong>sheets.google.com</strong> → File → Import → Upload → select <code>CountryFarms_Ledger_2026.xlsx</code> or <code>CountryFarms_Ledger_2027.xlsx</code> → choose "Insert new sheets".</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>Publish each sheet to the web as CSV</strong>
+              <p>In Google Sheets → File → Share → Publish to web. For each sheet (Jan-Log, Jan-Summary, etc.) select the sheet name, choose <strong>CSV</strong> format, click Publish. Copy each URL.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>Paste your Google Sheets URL below (or just the Sheet ID)</strong>
+              <p>The dashboard extracts the Sheet ID automatically. Just paste the full URL from your browser — e.g.<br>
+              <code>https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit</code><br>
+              <strong>Note:</strong> The 2026 sheet ID is already saved. This step is only needed for 2027.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>Replace customer names in the spreadsheet</strong>
+              <p>In each <code>Jan-Log</code> → <code>Dec-Log</code> sheet, update Row 3 columns D–K with your actual customer names. Use Find &amp; Replace (Ctrl+H) to do all sheets at once.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <input type="text" class="url-input" id="sheetsUrl" placeholder="Paste your 2027 Google Sheets sharing URL here…">
+          <button class="btn-primary" onclick="saveAndConnect()">Connect</button>
+          <button class="btn-secondary" onclick="useZeroData()">Reset to zero</button>
+        </div>
+
+        <p style="margin-top:14px;font-size:.75rem;color:var(--ink-4)">
+          Your URL is saved only in your browser's local storage and never sent anywhere. The dashboard reads data directly from Google's servers when you refresh.
+        </p>
+      </div>
+
+      <div class="setup-panel" style="margin-top:16px">
+        <h2>Dashboard data mapping</h2>
+        <p>This is exactly which cell in each sheet the dashboard reads from:</p>
+        <table class="mini-table" style="margin-top:10px">
+          <thead><tr><th>Dashboard card</th><th>Google Sheet</th><th>Cell / range</th></tr></thead>
+          <tbody>
+            <tr><td>Total revenue</td><td>Jan-Summary (etc.)</td><td>B (TOTAL REVENUE row)</td></tr>
+            <tr><td>Total COGS</td><td>Jan-Summary</td><td>B (TOTAL COGS row)</td></tr>
+            <tr><td>Net profit</td><td>Jan-Summary</td><td>B (NET PROFIT row)</td></tr>
+            <tr><td>Milk litres sold</td><td>Jan-Log summary block</td><td>Total Milk Sold (L)</td></tr>
+            <tr><td>Daily trend chart</td><td>Jan-Log</td><td>Column for Total Sold, rows 5–35</td></tr>
+            <tr><td>Customer payments</td><td>Jan-Summary</td><td>Payment status table</td></tr>
+            <tr><td>Livestock counts</td><td>Jan-Summary</td><td>Livestock section</td></tr>
+            <tr><td>Yearly totals</td><td>YEARLY MASTER</td><td>Row per metric, col B–M</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG — paste your Google Sheets URL here after setup
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  ★  DASHBOARD CONFIG — THE ONLY SECTION YOU NEED TO EDIT  ★
+//
+//  activeYear       → 2026 or 2027
+//  activeCustomers  → number of customers currently active (1–100)
+//                     Only the first N slots below will be shown.
+//  customers        → 100 slots. Fill in names as you add customers.
+//                     Slots beyond activeCustomers are automatically hidden.
+//  bulkBuyers       → up to 2 bulk buyer name slots
+//  sheetIds         → Sheet ID from the sharing URL (/d/XXXXX/edit)
+//  publishedIds     → Published ID from File→Share→Publish to web→CSV (/d/e/XXXXX/pub)
+//                     Both 2026 IDs are already set. Add 2027 IDs when ready.
+// ═══════════════════════════════════════════════════════════
+const DASHBOARD_CONFIG = {
+
+  activeYear: 2026,       // ← change to 2027 when needed
+
+  activeCustomers: 22,    // ← change this number as you add customers (max 100)
+
+  customers: [
+    // Slots 1–22 (active) — replace "TO BE UPDATED" with real names
+    "TO BE UPDATED",  // 1
+    "TO BE UPDATED",  // 2
+    "TO BE UPDATED",  // 3
+    "TO BE UPDATED",  // 4
+    "TO BE UPDATED",  // 5
+    "TO BE UPDATED",  // 6
+    "TO BE UPDATED",  // 7
+    "TO BE UPDATED",  // 8
+    "TO BE UPDATED",  // 9
+    "TO BE UPDATED",  // 10
+    "TO BE UPDATED",  // 11
+    "TO BE UPDATED",  // 12
+    "TO BE UPDATED",  // 13
+    "TO BE UPDATED",  // 14
+    "TO BE UPDATED",  // 15
+    "TO BE UPDATED",  // 16
+    "TO BE UPDATED",  // 17
+    "TO BE UPDATED",  // 18
+    "TO BE UPDATED",  // 19
+    "TO BE UPDATED",  // 20
+    "TO BE UPDATED",  // 21
+    "TO BE UPDATED",  // 22
+    // Slots 23–100 (inactive — hidden until you increase activeCustomers above)
+    "", "", "", "", "", "", "", "", "", "",  // 23-32
+    "", "", "", "", "", "", "", "", "", "",  // 33-42
+    "", "", "", "", "", "", "", "", "", "",  // 43-52
+    "", "", "", "", "", "", "", "", "", "",  // 53-62
+    "", "", "", "", "", "", "", "", "", "",  // 63-72
+    "", "", "", "", "", "", "", "", "", "",  // 73-82
+    "", "", "", "", "", "", "", "", "", "",  // 83-92
+    "", "", "", "", "", "", "", "",          // 93-100
+  ],
+
+  bulkBuyers: [
+    "TO BE UPDATED",   // Bulk Buyer slot 1
+    "",                // Bulk Buyer slot 2 (add name when ready)
+  ],
+
+  // ── Google Sheets — Sheet IDs ────────────────────────────
+  // Sheet ID is the long string in the Google Sheets URL between /d/ and /edit
+  // 2026 sheet ID is already set. For 2027: paste the new ID in the 2027 field below.
+  sheetIds: {
+    // 2026 sheet — real ID (for gviz CSV) and published ID (for pub CSV fallback)
+    2026: '1qFln9KcxDZfrR6dd128QfXyFFInSKQy6vRb-jYjeve4',
+    2027: '',    // ← paste 2027 sheet ID here when ready (from the sharing URL)
+  },
+  // Published IDs — from File → Share → Publish to web → CSV link
+  // Format: the long string after /d/e/ in the published URL
+  publishedIds: {
+    2026: '2PACX-1vT8PA_1zETxMwIclbU9siQ89nwPQ_HmV6L1cJod5O8ySy6MPcHjHICK7yoVj2do-zJY20z71WV6laA3',
+    2027: '',    // ← paste 2027 published ID here when ready
+  },
+};
+
+// ── Derived from config (do not edit below this line) ─────────
+function getSheetId(year) {
+  // Check localStorage override first (from saveAndConnect), then config
+  return localStorage.getItem(`cf_sheet_id_${year}`)
+    || (DASHBOARD_CONFIG.sheetIds && DASHBOARD_CONFIG.sheetIds[year])
+    || '';
+}
+function getPublishedId(year) {
+  return localStorage.getItem(`cf_pub_id_${year}`)
+    || (DASHBOARD_CONFIG.publishedIds && DASHBOARD_CONFIG.publishedIds[year])
+    || '';
+}
+// Returns array of URLs to try, in order of reliability
+function getCsvUrls(year, sheetName) {
+  const id      = getSheetId(year);
+  const pubId   = getPublishedId(year);
+  const enc     = encodeURIComponent(sheetName);
+  const urls    = [];
+  if (id) {
+    // Format 1: export (works with "Anyone with link" — most reliable for named sheets)
+    urls.push(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv&sheet=${enc}`);
+    // Format 2: gviz (works when published to web)
+    urls.push(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${enc}`);
+  }
+  return urls;
+}
+
+// Fetch CSV trying each URL format until one succeeds
+async function fetchSheetCSV(year, sheetName) {
+  const urls = getCsvUrls(year, sheetName);
+  let lastErr = null;
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (resp.ok) {
+        const text = await resp.text();
+        // Sanity check — Google returns HTML error pages for bad sheet names
+        if (text.trim().startsWith('<')) continue;
+        return text;
+      }
+    } catch(e) { lastErr = e; }
+  }
+  throw lastErr || new Error(`Could not fetch "${sheetName}" — tried ${urls.length} URL formats.`);
+}
+const CONFIG = {
+  get sheetsBaseUrl() {
+    return getSheetId(DASHBOARD_CONFIG.activeYear) ? 'connected' : '';
+  },
+  isConnected: false,
+};
+
+// Active customer list (only the first N slots, non-empty names only)
+function getActiveCustomers() {
+  return DASHBOARD_CONFIG.customers
+    .slice(0, DASHBOARD_CONFIG.activeCustomers)
+    .map((name, i) => name || `Customer ${i+1}`);
+}
+function getActiveBulkBuyers() {
+  return DASHBOARD_CONFIG.bulkBuyers.filter(b => b !== '');
+}
+
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Currency formatter ──────────────────────────────────────
+function rs(n, decimals=0) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return 'Rs\u00a0' + Math.abs(n).toLocaleString('en-PK', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+function num(n, d=1) {
+  if (n === null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-PK', {minimumFractionDigits:d,maximumFractionDigits:d});
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ZERO DATA — dashboard shows blank/zero until Google Sheets
+//  is connected. No sample data at all.
+// ═══════════════════════════════════════════════════════════
+function buildZeroData() {
+  const CUSTOMERS = getActiveCustomers();
+  const BULK      = getActiveBulkBuyers();
+  const daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+  return Array.from({length:12}, (_, i) => {
+    const custPayments = [...CUSTOMERS, ...BULK].map(name => ({
+      name,
+      type: BULK.includes(name) ? 'Bulk' : 'Retail',
+      litres: 0, due: 0, paid: 0, balance: 0, status: 'Unpaid',
+    }));
+
+    const days = Array.from({length: daysInMonth[i]}, (_, d) => {
+      const custs = {};
+      [...CUSTOMERS, ...BULK].forEach(c => { custs[c] = 0; });
+      return {
+        day: d+1,
+        date: `${d+1} ${MONTH_SHORT[i]}`,
+        customers: custs,
+        totalSold: 0, price: 0, revenue: 0,
+        morning: 0, evening: 0,
+      };
+    });
+
+    return {
+      rev: 0, cogs: 0, opex: 0, gross: 0, net: 0, mlk: 0,
+      milking_cows: 0, dry_cows: 0, calves: 0,
+      total_animals: 0, avg_yield: 0,
+      feed: { items: [], total: 0 },
+      customers: CUSTOMERS,
+      bulk: BULK,
+      custPayments,
+      days,
+    };
+  });
+}
+
+let DATA = buildZeroData();
+let currentMonth = new Date().getMonth();
+let currentView  = 'monthly';
+
+// ── Chart instances ─────────────────────────────────────────
+let charts = {};
+function destroyChart(id) { if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE SHEETS LOADER
+// ═══════════════════════════════════════════════════════════
+async function loadFromSheets() {
+  const year = DASHBOARD_CONFIG.activeYear;
+  const sheetId = getSheetId(year);
+  if (!sheetId) {
+    showBanner('not-connected'); return;
+  }
+  console.log(`Loading ${year} sheet — ID: ${sheetId}`);
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  document.getElementById('statusDot').className = 'status-dot offline';
+
+  try {
+    // Load yearly master — tries export then gviz format automatically
+    const yrCsv = await fetchSheetCSV(year, 'YEARLY MASTER');
+
+    // Parse yearly totals
+    const liveData = parseYearlyCSV(yrCsv, sheetId);
+
+    // Load current month's summary for detailed KPIs
+    try {
+      const mCsv = await fetchSheetCSV(year, `${MONTH_SHORT[currentMonth]}-Summary`);
+      mergeMonthlyCSV(liveData, mCsv, currentMonth);
+    } catch(e) {
+      console.warn('Monthly summary fetch failed (non-fatal):', e.message);
+    }
+
+    DATA = liveData;
+    CONFIG.isConnected = true;
+    showBanner('connected');
+    document.getElementById('statusDot').className = 'status-dot';
+
+  } catch(e) {
+    console.warn('Sheets load failed:', e.message);
+    // Show specific guidance based on error type
+    const msg = e.message || '';
+    if (msg.includes('fetch') || msg.includes('Failed') || msg.includes('network')) {
+      showBanner('cors');
+    } else {
+      showBanner('error');
+    }
+    document.getElementById('statusDot').className = 'status-dot error';
+  } finally {
+    btn.classList.remove('loading');
+    renderCurrentView();
+  }
+}
+
+// ── CSV parser helpers ──────────────────────────────────────
+function parseCSV(csv) {
+  return csv.trim().split('\n').map(row =>
+    row.split(',').map(c => c.replace(/^"|"$/g,'').trim())
+  );
+}
+
+function parseYearlyCSV(csv, sheetId) {
+  // Build a data structure from the yearly master CSV
+  const rows = parseCSV(csv);
+  const months = Array.from({length:12}, () => ({
+    rev:0,cogs:0,opex:0,gross:0,net:0,mlk:0,
+    milking_cows:0,dry_cows:0,calves:0,total_animals:0,avg_yield:0,
+    feed:{items:[],total:0},
+    customers:[],bulk:[],custPayments:[],days:[],
+  }));
+
+  const parseNum = s => parseFloat((s||'').replace(/[^0-9.-]/g,'')) || 0;
+
+  rows.forEach(row => {
+    const label = (row[0]||'').trim();
+    // Cols 1-12 = Jan-Dec
+    const vals  = row.slice(1,13).map(parseNum);
+    if (label.includes('Total Revenue'))    vals.forEach((v,i)=>{ months[i].rev  = v; });
+    if (label.includes('Total COGS'))       vals.forEach((v,i)=>{ months[i].cogs = v; });
+    if (label.includes('Total OpEx'))       vals.forEach((v,i)=>{ months[i].opex = v; });
+    if (label.includes('Gross Profit'))     vals.forEach((v,i)=>{ months[i].gross= v; });
+    if (label.includes('Net Profit'))       vals.forEach((v,i)=>{ months[i].net  = v; });
+    if (label.includes('Total Milk Produced')) vals.forEach((v,i)=>{ months[i].mlk = v; });
+    if (label.includes('Total Animals'))    vals.forEach((v,i)=>{ months[i].total_animals = v; });
+  });
+
+  months.forEach(m => {
+    if (!m.gross && m.rev && m.cogs) m.gross = m.rev - m.cogs;
+    if (!m.net && m.gross && m.opex) m.net   = m.gross - m.opex;
+  });
+
+  return months;
+}
+
+function mergeMonthlyCSV(data, csv, mi) {
+  const rows   = parseCSV(csv);
+  const parseN = s => parseFloat((s||'').replace(/[^0-9.-]/g,'')) || 0;
+  const m      = data[mi];
+
+  rows.forEach(row => {
+    const label = (row[0]||'').trim();
+    const val   = parseN(row[1]);
+    if (label.includes('Milking cows'))   m.milking_cows = val;
+    if (label.includes('Dry cows'))       m.dry_cows     = val;
+    if (label.includes('Calves'))         m.calves       = val;
+    if (label.includes('Total milk produced')) m.mlk     = val;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+function renderCurrentView() {
+  if      (currentView==='monthly')   renderMonthly(currentMonth);
+  else if (currentView==='yearly')    renderYearly();
+  else if (currentView==='daily')     renderDaily(currentMonth);
+  else if (currentView==='customers') renderCustomers(currentMonth);
+  else if (currentView==='alerts')    renderAlerts();
+  else if (currentView==='employees') renderEmployees();
+}
+
+// ── Monthly ─────────────────────────────────────────────────
+function renderMonthly(mi) {
+  const d   = DATA[mi];
+  const prev= DATA[mi>0?mi-1:11];
+  const net = d.net || (d.rev - d.cogs - d.opex);
+  const prevNet = prev.net || (prev.rev - prev.cogs - prev.opex);
+  const netChg = net - prevNet;
+  const label = MONTHS[mi] + ' ' + (currentYear||DASHBOARD_CONFIG.activeYear);
+  document.getElementById('monthLabel').textContent  = label;
+  document.getElementById('monthLabel2').textContent = label;
+
+  // ── KPI cards ──
+  const kpis = [
+    { label:'Total revenue',    value:rs(d.rev),
+      sub:`${num(d.mlk,0)} litres sold`,
+      change:'+4.2%', up:true,
+      accent:'var(--green-600)', iconBg:'var(--green-50)',
+      icon:'<path d="M2 10L6 6L9 9L14 4" stroke="#2d8f56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'},
+    { label:'Gross profit',     value:rs(d.gross || d.rev-d.cogs),
+      sub:Math.round((d.gross||d.rev-d.cogs)/d.rev*100)+'% margin',
+      accent:'var(--blue-600)', iconBg:'var(--blue-50)',
+      icon:'<circle cx="8" cy="8" r="5.5" stroke="#1a5fa8" stroke-width="1.4" fill="none"/><path d="M6 8h4M8 6v4" stroke="#1a5fa8" stroke-width="1.4" stroke-linecap="round"/>'},
+    { label:'Net profit',       value:rs(Math.abs(net)),
+      sub:net>=0?'Profitable':'Loss this month',
+      change:(netChg>=0?'+':'')+rs(netChg)+' vs last month', up:netChg>=0,
+      accent:net>=0?'var(--green-600)':'var(--red-500)', iconBg:net>=0?'var(--green-50)':'var(--red-100)',
+      icon:'<path d="M2 12L5 8L8 10L12 5L14 7" stroke="'+(net>=0?'#2d8f56':'#c0392b')+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'},
+    { label:'Milk produced',    value:num(d.mlk,0)+' L',
+      sub:`Avg ${num(d.avg_yield,1)} L/cow/day`,
+      accent:'var(--blue-400)', iconBg:'#eef6fd',
+      icon:'<ellipse cx="8" cy="9" rx="5" ry="4" stroke="#3b82c4" stroke-width="1.4" fill="none"/><path d="M5.5 9c0-2 1.1-3.5 2.5-3.5" stroke="#3b82c4" stroke-width="1.2" stroke-linecap="round"/>'},
+    { label:'Feed cost',        value:rs(d.feed?.total||0),
+      sub:`Rs ${((d.feed?.total||0)/d.mlk).toFixed(1)}/litre`,
+      accent:'var(--amber-500)', iconBg:'var(--amber-100)',
+      icon:'<path d="M4 12c0-4 1.5-7 4-7s4 3 4 7" stroke="#d97706" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M6 12h4" stroke="#d97706" stroke-width="1.4" stroke-linecap="round"/>'},
+    { label:'COGS',             value:rs(d.cogs),
+      sub:Math.round(d.cogs/d.rev*100)+'% of revenue',
+      accent:'#7c3aed', iconBg:'#f5f0ff',
+      icon:'<rect x="2" y="4" width="10" height="8" rx="1.5" stroke="#7c3aed" stroke-width="1.4" fill="none"/><path d="M5 8h4" stroke="#7c3aed" stroke-width="1.4" stroke-linecap="round"/>'},
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>`
+    <div class="kpi-card fade-up" style="--accent:${k.accent};--icon-bg:${k.iconBg}">
+      <div class="kpi-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16">${k.icon}</svg>
+      </div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
+      ${k.change?`<div class="kpi-change ${k.up?'up':'down'}">${k.up?'▲':'▼'} ${k.change}</div>`:''}
+    </div>`).join('');
+
+  // ── Trend chart ──
+  const days = d.days.length ? d.days : Array.from({length:30},(_,i)=>({
+    revenue: 0, expenses: 0,
+  }));
+  const labels = days.map((_,i)=>(i+1)%5===0?`${i+1}`:'');
+  const revData = days.map(x=>x.revenue || 0);
+  const expData = days.map(x=>x.expenses || 0);
+
+  document.getElementById('trendLegend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:#2d8f56"></div>Revenue</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a5fa8;opacity:.5"></div>Expenses</div>`;
+
+  destroyChart('trend');
+  charts.trend = new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{ labels, datasets:[
+      {label:'Revenue', data:revData, borderColor:'#2d8f56', backgroundColor:'rgba(45,143,86,.07)',
+       tension:.4, pointRadius:0, borderWidth:1.8, fill:true},
+      {label:'Expenses', data:expData, borderColor:'#1a5fa8', backgroundColor:'rgba(26,95,168,.05)',
+       tension:.4, pointRadius:0, borderWidth:1.5, borderDash:[4,3], fill:true},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}, ticks:{font:{size:9},color:'#7a8f7a',autoSkip:false,maxRotation:0}},
+        y:{grid:{color:'rgba(0,0,0,.04)'}, ticks:{font:{size:9},color:'#7a8f7a',
+          callback:v=>'Rs'+(Math.round(v/1000))+'k'}},
+      }},
+  });
+
+  // ── Cost donut ──
+  const costLabels = ['Feed','Labor','Vet','Transport','Misc'];
+  const feed = d.feed?.total || Math.round(d.cogs*.64);
+  const costVals = [feed, Math.round(d.cogs*.18), Math.round(d.cogs*.07), Math.round(d.opex*.22), Math.round(d.opex*.15)];
+  const costColors = ['#2d8f56','#1a5fa8','#d97706','#7c3aed','#0891b2'];
+  document.getElementById('costLegend').innerHTML = costLabels.map((l,i)=>
+    `<div class="legend-item"><div class="legend-dot" style="background:${costColors[i]}"></div>${l}</div>`
+  ).join('');
+  destroyChart('cost');
+  charts.cost = new Chart(document.getElementById('costChart'),{
+    type:'doughnut',
+    data:{labels:costLabels,datasets:[{data:costVals,backgroundColor:costColors,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>' Rs '+ctx.raw.toLocaleString()}}}},
+  });
+
+  // ── P&L ──
+  const gross2 = d.gross || d.rev - d.cogs;
+  document.getElementById('pnlSummary').innerHTML = `
+    <div class="pnl-row"><span class="pnl-label">Total revenue</span><span class="pnl-value">${rs(d.rev)}</span></div>
+    <div class="pnl-row"><span class="pnl-label" style="color:var(--red-500)">(-) COGS</span><span class="pnl-value" style="color:var(--red-500)">- ${rs(d.cogs)}</span></div>
+    <div class="pnl-divider"></div>
+    <div class="pnl-row section-total"><span>Gross profit</span><span class="pnl-value">${rs(gross2)}</span></div>
+    <div class="pnl-row"><span class="pnl-label" style="color:var(--red-500)">(-) Operating expenses</span><span class="pnl-value" style="color:var(--red-500)">- ${rs(d.opex)}</span></div>
+    <div class="pnl-divider"></div>
+    <div class="pnl-row ${net>=0?'net-profit':'net-loss'}"><span class="pnl-label">${net>=0?'Net profit':'Net loss'}</span><span class="pnl-value">${rs(Math.abs(net))}</span></div>`;
+
+  // ── Livestock ──
+  const ls = [
+    {num:d.milking_cows||'—', label:'Milking cows'},
+    {num:d.dry_cows||'—',     label:'Dry cows'},
+    {num:d.calves||'—',       label:'Calves'},
+    {num:d.total_animals||'—',label:'Total animals'},
+    {num:num(d.mlk,0),        label:'Litres produced'},
+    {num:num(d.avg_yield,1)+' L', label:'Avg yield/day'},
+  ];
+  document.getElementById('livestockGrid').innerHTML = ls.map(l=>`
+    <div class="livestock-card fade-up">
+      <div class="livestock-num">${l.num}</div>
+      <div class="livestock-label">${l.label}</div>
+    </div>`).join('');
+
+  // ── Feed table ──
+  const feedItems = d.feed?.items || [
+    {type:'Dry fodder',    qty:'420 kg',   cost:Math.round(d.cogs*.28), cpl:+(d.cogs*.28/d.mlk).toFixed(2)},
+    {type:'Green fodder',  qty:'1,800 kg', cost:Math.round(d.cogs*.22), cpl:+(d.cogs*.22/d.mlk).toFixed(2)},
+    {type:'Concentrates',  qty:'310 kg',   cost:Math.round(d.cogs*.24), cpl:+(d.cogs*.24/d.mlk).toFixed(2)},
+    {type:'Oil cake',      qty:'140 kg',   cost:Math.round(d.cogs*.14), cpl:+(d.cogs*.14/d.mlk).toFixed(2)},
+    {type:'Minerals',      qty:'18 kg',    cost:Math.round(d.cogs*.07), cpl:+(d.cogs*.07/d.mlk).toFixed(2)},
+  ];
+  document.querySelector('#feedTable tbody').innerHTML = feedItems.map(f=>`
+    <tr><td>${f.type}</td><td>${f.qty}</td><td>${rs(f.cost)}</td><td>Rs ${f.cpl}</td></tr>`).join('');
+
+  // ── Milk production bar (morning vs evening) ──
+  const morn = d.days.map(x=>x.morning||0);
+  const eve  = d.days.map(x=>x.evening||0);
+  const dayLabels = Array.from({length:morn.length},(_,i)=>(i+1)%7===0?`${i+1}`:'');
+  destroyChart('milk');
+  charts.milk = new Chart(document.getElementById('milkChart'),{
+    type:'bar',
+    data:{labels:dayLabels, datasets:[
+      {label:'Morning',data:morn,backgroundColor:'rgba(45,143,86,.75)',borderRadius:2,borderWidth:0},
+      {label:'Evening',data:eve, backgroundColor:'rgba(26,95,168,.6)', borderRadius:2,borderWidth:0},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:9},color:'#7a8f7a',autoSkip:false,maxRotation:0}},
+        y:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},color:'#7a8f7a',callback:v=>v+'L'}},
+      }},
+  });
+
+  // ── Payment table ──
+  const payments = d.custPayments || [];
+  document.querySelector('#paymentTable tbody').innerHTML = payments.map(p=>`
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${num(p.litres,1)} L</td>
+      <td>${rs(p.due)}</td>
+      <td>${p.paid?rs(p.paid):'—'}</td>
+      <td style="${p.balance>0?'color:var(--red-500)':''}">${p.balance?rs(p.balance):'—'}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-4);padding:16px">No payment data</td></tr>';
+
+  // ── KPI cards 2 ──
+  const pricePerL = Math.round(d.rev / d.mlk);
+  const costPerL  = Math.round((d.cogs + d.opex) / d.mlk);
+  const profPerL  = pricePerL - costPerL;
+  const kpis2 = [
+    {label:'Selling price / litre',value:'Rs '+pricePerL,      accent:'var(--green-600)'},
+    {label:'Cost / litre',         value:'Rs '+costPerL,       accent:'var(--blue-600)'},
+    {label:'Profit / litre',       value:'Rs '+profPerL,       accent:profPerL>0?'var(--green-600)':'var(--red-500)'},
+    {label:'Feed cost %',          value:Math.round((d.feed?.total||0)/d.rev*100)+'%', accent:'var(--amber-500)'},
+    {label:'Net margin',           value:Math.round(net/d.rev*100)+'%',  accent:'#7c3aed'},
+    {label:'COGS %',               value:Math.round(d.cogs/d.rev*100)+'%', accent:'var(--blue-400)'},
+  ];
+  document.getElementById('kpiGrid2').innerHTML = kpis2.map(k=>`
+    <div class="kpi-card fade-up" style="--accent:${k.accent}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="font-size:1.2rem">${k.value}</div>
+    </div>`).join('');
+}
+
+// ── Yearly ──────────────────────────────────────────────────
+function renderYearly() {
+  const totRev  = DATA.reduce((s,m)=>s+m.rev,0);
+  const totCogs = DATA.reduce((s,m)=>s+m.cogs,0);
+  const totOpex = DATA.reduce((s,m)=>s+m.opex,0);
+  const totNet  = totRev-totCogs-totOpex;
+  const totMilk = DATA.reduce((s,m)=>s+m.mlk,0);
+
+  // Update year labels
+  const _yr = currentYear||DASHBOARD_CONFIG.activeYear;
+  ['yrLabel','yrChartLabel'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent=_yr;
+  });
+  document.getElementById('yrKpiGrid').innerHTML = [
+    {label:'Annual revenue',     value:rs(totRev),            accent:'var(--green-600)'},
+    {label:'Annual COGS',        value:rs(totCogs),           accent:'var(--blue-600)'},
+    {label:'Annual OpEx',        value:rs(totOpex),           accent:'var(--amber-500)'},
+    {label:'Annual net profit',  value:rs(Math.abs(totNet)),  accent:totNet>=0?'var(--green-600)':'var(--red-500)'},
+    {label:'Total milk produced',value:num(totMilk,0)+' L',  accent:'var(--blue-400)'},
+    {label:'Net margin',         value:Math.round(totNet/totRev*100)+'%', accent:'#7c3aed'},
+  ].map(k=>`<div class="kpi-card fade-up" style="--accent:${k.accent}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div></div>`).join('');
+
+  destroyChart('yrBar');
+  charts.yrBar = new Chart(document.getElementById('yrBarChart'),{
+    type:'bar',
+    data:{
+      labels: MONTH_SHORT,
+      datasets:[
+        {label:'Revenue',    data:DATA.map(m=>m.rev),  backgroundColor:'rgba(45,143,86,.75)',borderRadius:4,borderWidth:0},
+        {label:'Net profit', data:DATA.map(m=>m.net),  backgroundColor:'rgba(26,95,168,.7)', borderRadius:4,borderWidth:0},
+      ],
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10},color:'#7a8f7a',autoSkip:false,maxRotation:0}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10},color:'#7a8f7a',callback:v=>'Rs'+(Math.round(v/1000))+'k'}},
+      }},
+  });
+
+  document.getElementById('yrMonthGrid').innerHTML = DATA.map((m,i)=>{
+    const net = m.net||(m.rev-m.cogs-m.opex);
+    return `<div class="yr-month-card${i===currentMonth?' active-month':''}"
+      onclick="switchToMonth(${i})">
+      <div class="yr-month-name">${MONTHS[i]}</div>
+      <div class="yr-month-rev">${rs(m.rev)}</div>
+      <div class="yr-month-net ${net>=0?'pos':'neg'}">${net>=0?'▲':'▼'} ${rs(Math.abs(net))} net</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Daily log ────────────────────────────────────────────────
+function renderDaily(mi) {
+  const d = DATA[mi];
+  document.getElementById('dailyMonthLabel').textContent = MONTHS[mi]+' '+(currentYear||DASHBOARD_CONFIG.activeYear);
+  document.getElementById('logSheetName').textContent = MONTH_SHORT[mi]+'-Log';
+
+  const allCusts = [...(d.customers||[]), ...(d.bulk||[])];
+  const days     = d.days || [];
+
+  // Build header
+  document.getElementById('dailyTableHead').innerHTML = `<tr>
+    <th>Date</th>
+    ${allCusts.map(c=>`<th>${c}</th>`).join('')}
+    <th>Total sold (L)</th>
+    <th>Price (Rs/L)</th>
+    <th>Revenue (Rs)</th>
+  </tr>`;
+
+  if (!days.length) {
+    document.getElementById('dailyTableBody').innerHTML =
+      `<tr><td colspan="${allCusts.length+4}" style="text-align:center;padding:24px;color:var(--ink-4)">Connect to Google Sheets to view live daily log data</td></tr>`;
+    return;
+  }
+
+  // Totals
+  const totals = {};
+  allCusts.forEach(c=>{ totals[c]=0; });
+  let totSold=0, totRev=0;
+  days.forEach(day=>{
+    allCusts.forEach(c=>{ totals[c]+=(day.customers?.[c]||0); });
+    totSold += day.totalSold||0;
+    totRev  += day.revenue||0;
+  });
+
+  document.getElementById('dailyTableBody').innerHTML = [
+    ...days.map(day=>`
+      <tr>
+        <td>${day.date}</td>
+        ${allCusts.map(c=>`<td>${num(day.customers?.[c]||0,1)}</td>`).join('')}
+        <td><strong>${num(day.totalSold,1)}</strong></td>
+        <td>${day.price||150}</td>
+        <td>${rs(day.revenue)}</td>
+      </tr>`),
+    `<tr class="total-row">
+      <td>TOTAL</td>
+      ${allCusts.map(c=>`<td>${num(totals[c],1)}</td>`).join('')}
+      <td>${num(totSold,1)}</td>
+      <td>—</td>
+      <td>${rs(totRev)}</td>
+    </tr>`,
+  ].join('');
+}
+
+// ── Customers ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  ADMIN AUTH — Customers section lock
+// ═══════════════════════════════════════════════════════════
+const ADMIN_CREDS = { user: 'admin', pass: 'x10shions' };
+let adminUnlocked = false;   // session-only, never persisted
+let pendingNavBtn = null;    // the nav button that triggered the lock
+let pendingNavCallback = null; // the callback to run after successful login
+
+function requireAdmin(btn, onSuccess) {
+  if (adminUnlocked) { onSuccess(); return; }
+  pendingNavBtn = btn;
+  pendingNavCallback = onSuccess;
+  const overlay = document.getElementById('lockOverlay');
+  overlay.classList.add('visible');
+  // Clear fields
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminPass').value = '';
+  document.getElementById('lockError').innerHTML = '&nbsp;';
+  setTimeout(() => document.getElementById('adminUser').focus(), 80);
+}
+
+function submitLogin() {
+  const user = document.getElementById('adminUser').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  const err  = document.getElementById('lockError');
+
+  if (user === ADMIN_CREDS.user && pass === ADMIN_CREDS.pass) {
+    adminUnlocked = true;
+    document.getElementById('lockOverlay').classList.remove('visible');
+    err.innerHTML = '&nbsp;';
+    // Update lock badge to unlocked icon
+    updateLockBadge(true);
+    // Proceed with the nav switch — go to whichever section triggered login
+    if (pendingNavCallback) {
+      pendingNavCallback();
+      pendingNavCallback = null;
+    } else if (pendingNavBtn) {
+      _doSwitchNav(pendingNavBtn, 'customers');
+    }
+    pendingNavBtn = null;
+  } else {
+    err.textContent = user !== ADMIN_CREDS.user ? 'Incorrect username.' : 'Incorrect password.';
+    // Re-trigger shake animation
+    err.style.animation = 'none';
+    requestAnimationFrame(() => { err.style.animation = ''; });
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminPass').focus();
+  }
+}
+
+function cancelLogin() {
+  document.getElementById('lockOverlay').classList.remove('visible');
+  pendingNavBtn = null;
+  // Return to monthly view
+  const btn = document.querySelector('.sidebar .nav-btn[onclick*="\'monthly\'"]');
+  if (btn) _doSwitchNav(btn, 'monthly');
+}
+
+function adminLogout() {
+  adminUnlocked = false;
+  updateLockBadge(false);
+  // Navigate away from customers view back to monthly
+  const btn = document.querySelector('.sidebar .nav-btn[onclick*="\'monthly\'"]');
+  if (btn) _doSwitchNav(btn, 'monthly');
+}
+
+function updateLockBadge(unlocked) {
+  const lockedSVG = `<svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+    <rect x="1" y="4.5" width="7" height="5" rx="1" fill="currentColor" opacity=".7"/>
+    <path d="M2.5 4.5V3a2 2 0 0 1 4 0v1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+  </svg>`;
+  const unlockedSVG = `<svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+    <rect x="1" y="4.5" width="7" height="5" rx="1" fill="currentColor" opacity=".7"/>
+    <path d="M2.5 4.5V3a2 2 0 0 1 2.5-1.9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".5"/>
+  </svg>`;
+  const svg = unlocked ? unlockedSVG : lockedSVG;
+  const title = unlocked ? 'Unlocked' : 'Locked';
+  ['navLockBadge', 'navEmpLockBadge'].forEach(id => {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    badge.innerHTML = svg;
+    badge.title = title;
+  });
+}
+
+
+
+function renderCustomers(mi) {
+  const d = DATA[mi];
+  const payments = d.custPayments || [];
+
+  document.getElementById('custKpiGrid').innerHTML = [
+    {label:'Total customers',  value:payments.length,                        accent:'var(--green-600)'},
+    {label:'Total litres/month',value:num(payments.reduce((s,p)=>s+p.litres,0),0)+' L', accent:'var(--blue-600)'},
+    {label:'Total amount due', value:rs(payments.reduce((s,p)=>s+p.due,0)),  accent:'var(--amber-500)'},
+    {label:'Amount collected', value:rs(payments.reduce((s,p)=>s+p.paid,0)), accent:'var(--green-600)'},
+  ].map(k=>`<div class="kpi-card fade-up" style="--accent:${k.accent}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div></div>`).join('');
+
+  document.querySelector('#custTable tbody').innerHTML = payments.map((p,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${p.name}</strong></td>
+      <td><span class="badge ${p.type==='Bulk'?'partial':'paid'}">${p.type}</span></td>
+      <td>${num(p.litres/30,1)} L</td>
+      <td>${num(p.litres,1)} L</td>
+      <td>${rs(p.due)}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--ink-4)">No data</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI EVENT HANDLERS
+// ═══════════════════════════════════════════════════════════
+function switchNav(btn, view) {
+  // Customers section requires admin auth
+  if ((view === 'customers' || view === 'employees') && !adminUnlocked) {
+    requireAdmin(btn, () => _doSwitchNav(btn, view));
+    return;
+  }
+  _doSwitchNav(btn, view);
+}
+
+function _doSwitchNav(btn, view) {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const titleMap = {monthly:'Monthly Overview',yearly:'Annual Overview',
+                    daily:'Daily Sales Log',customers:'Customer Overview',
+                    alerts:'Alerts',employees:'Employee IDs',setup:'Setup & Connect'};
+
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.getElementById('pageTitle').textContent = titleMap[view] || 'Dashboard';
+
+  document.getElementById('monthSelectorWrap').style.display = ['yearly','setup','alerts','employees'].includes(view)?'none':'block';
+
+  document.getElementById('vt-monthly').classList.toggle('active', view==='monthly');
+  document.getElementById('vt-yearly').classList.toggle('active',  view==='yearly');
+
+  renderCurrentView();
+}
+
+function setViewToggle(v) {
+  const btn = document.querySelector(`.sidebar .nav-btn[onclick*="'${v}'"]`);
+  if (btn) switchNav(btn, v);
+  else {
+    currentView = v;
+    document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+    document.getElementById('view-'+v).classList.add('active');
+    document.getElementById('vt-monthly').classList.toggle('active', v==='monthly');
+    document.getElementById('vt-yearly').classList.toggle('active',  v==='yearly');
+    document.getElementById('monthSelectorWrap').style.display = v==='yearly'?'none':'block';
+    renderCurrentView();
+  }
+}
+
+function onMonthChange() {
+  currentMonth = parseInt(document.getElementById('monthSelect').value);
+  renderCurrentView();
+}
+
+function switchToMonth(mi) {
+  currentMonth = mi;
+  document.getElementById('monthSelect').value = mi;
+  const btn = document.querySelector('.sidebar .nav-btn[onclick*="\'monthly\'"]');
+  if (btn) switchNav(btn, 'monthly');
+  else { currentView='monthly'; renderCurrentView(); }
+}
+
+function showBanner(state) {
+  const b = document.getElementById('connBanner');
+  if (state==='connected') {
+    b.className = 'conn-banner connected';
+    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+      <circle cx="8" cy="8" r="7" stroke="#2d8f56" stroke-width="1.4"/>
+      <path d="M5 8l2 2 4-4" stroke="#2d8f56" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg><span><strong>Connected to Google Sheets.</strong> Data is live — click "Refresh data" any time to sync.</span>`;
+  } else if (state==='cors') {
+    b.className = 'conn-banner';
+    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+      <circle cx="8" cy="8" r="7" stroke="#c0392b" stroke-width="1.4"/>
+      <path d="M8 5v4M8 10.5v.5" stroke="#c0392b" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span><strong>Cannot reach Google Sheets from this browser.</strong>
+      Make sure your sheet is set to <strong>Anyone with the link → Viewer</strong> in Share settings,
+      and that you have an internet connection. Then click <strong>Refresh data</strong>.</span>`;
+  } else if (state==='error') {
+    b.className = 'conn-banner';
+    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+      <circle cx="8" cy="8" r="7" stroke="#c0392b" stroke-width="1.4"/>
+      <path d="M8 5v4M8 10.5v.5" stroke="#c0392b" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span><strong>Could not load sheet data.</strong>
+      Make sure your 2026 sheet is shared as <strong>Anyone with the link → Viewer</strong>
+      and published via <strong>File → Share → Publish to web</strong>. Then click Refresh data.</span>`;
+  } else {
+    b.className = 'conn-banner';
+    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+      <circle cx="8" cy="8" r="7" stroke="#d97706" stroke-width="1.4"/>
+      <path d="M8 5v4M8 10.5v.5" stroke="#d97706" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span><strong>Not connected to Google Sheets.</strong>
+      Go to <strong>Setup &amp; Connect</strong> in the sidebar and paste your published CSV URL. All figures show zero until connected.</span>`;
+  }
+}
+
+function saveAndConnect() {
+  const input = document.getElementById('sheetsUrl').value.trim();
+  if (!input) return;
+  // Accept either a full Google Sheets URL or a bare Sheet ID
+  const idMatch = input.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+  const sheetId = idMatch ? idMatch[1] : (input.length > 20 ? input : null);
+  if (!sheetId) { alert('Invalid URL or Sheet ID. Please paste the full Google Sheets URL.'); return; }
+  const year = DASHBOARD_CONFIG.activeYear;
+  if (!DASHBOARD_CONFIG.sheetIds) DASHBOARD_CONFIG.sheetIds = {};
+  DASHBOARD_CONFIG.sheetIds[year] = sheetId;
+  localStorage.setItem(`cf_sheet_id_${year}`, sheetId);
+  // Also check if input contains a published /e/ ID
+  const pubMatch = input.match(/\/e\/([A-Za-z0-9_-]{10,})/);
+  if (pubMatch) {
+    if (!DASHBOARD_CONFIG.publishedIds) DASHBOARD_CONFIG.publishedIds = {};
+    DASHBOARD_CONFIG.publishedIds[year] = pubMatch[1];
+    localStorage.setItem(`cf_pub_id_${year}`, pubMatch[1]);
+  }
+  loadFromSheets();
+}
+
+function useZeroData() {
+  DATA = buildZeroData();
+  showBanner('not-connected');
+  renderCurrentView();
+}
+
+// ── Year switcher ────────────────────────────────────────────
+let currentYear = DASHBOARD_CONFIG.activeYear; // 2026 or 2027
+
+function switchYear(year) {
+  currentYear = year;
+  DASHBOARD_CONFIG.activeYear = year;
+  // sheetId is read dynamically via getSheetId(year) in loadFromSheets
+  [2026,2027].forEach(y => {
+    const btn = document.getElementById(`yt-${y}`);
+    if (btn) btn.classList.toggle('active', y === year);
+  });
+  // Rebuild mock with current active customers for new year
+  DATA = buildZeroData();
+  renderCurrentView();
+  if (!getSheetId(year)) showBanner('not-connected');
+  else loadFromSheets();
+}
+
+function initYearToggle() {
+  const y = DASHBOARD_CONFIG.activeYear;
+  [2026,2027].forEach(yr => {
+    const btn = document.getElementById(`yt-${yr}`);
+    if (btn) btn.classList.toggle('active', yr === y);
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  currentMonth = new Date().getMonth();
+  document.getElementById('monthSelect').value = currentMonth;
+  initYearToggle();
+  if (getSheetId(DASHBOARD_CONFIG.activeYear)) {
+    loadFromSheets();
+  } else {
+    renderMonthly(currentMonth);
+  }
+});
+
+
+// ═══════════════════════════════════════════════════════════
+//  ALERTS — fully local, no Google Sheets connection
+// ═══════════════════════════════════════════════════════════
+
+// ── Storage helpers ─────────────────────────────────────────
+const ALERT_KEY = 'cf_alerts_v1';
+
+function loadAlertData() {
+  try {
+    return JSON.parse(localStorage.getItem(ALERT_KEY)) || defaultAlertData();
+  } catch(e) { return defaultAlertData(); }
+}
+
+function saveAlerts() {
+  const d = collectAlertData();
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+}
+
+function defaultAlertData() {
+  const today = new Date().toISOString().split('T')[0];
+  return {
+    elec:    { issue: '', deadline: '', amount: 0, paid: false },
+    net:     { issue: '', deadline: '', amount: 0, paid: false },
+    wanda:   { qty: 1000, maxQty: 2000, threshold: 500 },
+    silage:  { qty: 800,  maxQty: 1500, threshold: 400 },
+    pouches: { qty: 500,  maxQty: 1000, threshold: 200, dailyProd: 0 },
+  };
+}
+
+function collectAlertData() {
+  const d = loadAlertData();
+  d.elec.issue    = document.getElementById('elec-issue')?.value    || d.elec.issue;
+  d.elec.deadline = document.getElementById('elec-deadline')?.value || d.elec.deadline;
+  d.net.issue     = document.getElementById('net-issue')?.value     || d.net.issue;
+  d.net.deadline  = document.getElementById('net-deadline')?.value  || d.net.deadline;
+  return d;
+}
+
+// ── Urgency helpers ─────────────────────────────────────────
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr) - new Date(new Date().toDateString());
+  return Math.ceil(diff / 86400000);
+}
+
+function billUrgency(days) {
+  if (days === null) return 'safe';
+  if (days < 0)  return 'high';
+  if (days <= 3) return 'high';
+  if (days <= 7) return 'medium';
+  if (days <= 14) return 'low';
+  return 'safe';
+}
+
+function qtyUrgency(qty, threshold, max) {
+  const pct = qty / max;
+  if (qty <= 0)            return 'high';
+  if (qty <= threshold * 0.5) return 'high';
+  if (qty <= threshold)    return 'medium';
+  if (pct <= 0.35)         return 'low';
+  return 'safe';
+}
+
+const URGENCY_LABEL = { safe:'Safe', low:'Low stock / Soon', medium:'Attention needed', high:'Urgent' };
+const URGENCY_COLOR = { safe:'#22c55e', low:'#eab308', medium:'#f97316', high:'#ef4444' };
+const PROGRESS_COLOR = { safe:'#22c55e', low:'#eab308', medium:'#f97316', high:'#ef4444' };
+
+function applyUrgency(cardId, urgency) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.className = `alert-card urgency-${urgency}`;
+}
+
+function dayChipHTML(days, urgency) {
+  if (days === null) return '<span style="font-size:.75rem;color:var(--ink-4)">No deadline set</span>';
+  if (days < 0)  return `<span class="days-chip high">OVERDUE by ${Math.abs(days)} day${Math.abs(days)!==1?'s':''}</span>`;
+  if (days === 0) return `<span class="days-chip high">Due TODAY</span>`;
+  return `<span class="days-chip ${urgency}">${days} day${days!==1?'s':''} left</span>`;
+}
+
+// ── Bill renderers ──────────────────────────────────────────
+function renderBillCard(prefix, label) {
+  const d = loadAlertData()[prefix];
+  const daysLeft = daysUntil(d.deadline);
+  const urgency  = d.paid ? 'safe' : billUrgency(daysLeft);
+
+  applyUrgency(`card-${prefix}`, urgency);
+
+  const pill = document.getElementById(`${prefix}-pill`);
+  if (pill) pill.textContent = d.paid ? 'Paid ✓' : URGENCY_LABEL[urgency];
+
+  // Restore date inputs
+  const issueEl = document.getElementById(`${prefix}-issue`);
+  const dlEl    = document.getElementById(`${prefix}-deadline`);
+  if (issueEl && d.issue) issueEl.value = d.issue;
+  if (dlEl && d.deadline) dlEl.value    = d.deadline;
+
+  // Meta section
+  const metaEl = document.getElementById(`${prefix}-meta`);
+  if (!metaEl) return;
+
+  const today = new Date().toLocaleDateString('en-PK', {day:'numeric',month:'short',year:'numeric'});
+  const issueFormatted = d.issue
+    ? new Date(d.issue).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})
+    : '—';
+  const dlFormatted = d.deadline
+    ? new Date(d.deadline).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'})
+    : '—';
+
+  metaEl.innerHTML = `
+    <div class="alert-meta-row">
+      <span class="alert-meta-label">Today</span>
+      <span class="alert-meta-value">${today}</span>
+    </div>
+    <div class="alert-meta-row">
+      <span class="alert-meta-label">Bill issue date</span>
+      <span class="alert-meta-value">${issueFormatted}</span>
+    </div>
+    <div class="alert-meta-row">
+      <span class="alert-meta-label">Payment deadline</span>
+      <span class="alert-meta-value ${urgency==='high'?'highlight':''}">${dlFormatted}</span>
+    </div>
+    <div class="alert-meta-row">
+      <span class="alert-meta-label">Bill amount</span>
+      <span class="alert-meta-value">Rs ${(d.amount||0).toLocaleString()}</span>
+    </div>
+    <div class="alert-meta-row" style="margin-top:6px">
+      <span class="alert-meta-label">Status</span>
+      <span>${dayChipHTML(d.paid ? null : daysLeft, urgency)}</span>
+    </div>`;
+
+  // Restore amount input
+  const amtEl = document.getElementById(`${prefix}-amount`);
+  if (amtEl && d.amount) amtEl.value = d.amount;
+
+  // Toggle paid/unpaid button
+  const toggleEl = document.getElementById(`${prefix}-toggle-btn`);
+  if (toggleEl) {
+    if (d.paid) {
+      toggleEl.innerHTML = `<button class="alert-btn danger" onclick="markBillUnpaid('${prefix}')">Mark unpaid</button>`;
+    } else {
+      toggleEl.innerHTML = `<button class="alert-btn neutral" onclick="markBillPaid('${prefix}')">Mark paid</button>`;
+    }
+  }
+}
+
+// ── Quantity renderers ──────────────────────────────────────
+function renderQtyCard(prefix, unit) {
+  const d = loadAlertData()[prefix];
+  const urgency = qtyUrgency(d.qty, d.threshold, d.maxQty);
+  const pct = Math.max(0, Math.min(100, (d.qty / d.maxQty) * 100));
+
+  applyUrgency(`card-${prefix}`, urgency);
+
+  const pill = document.getElementById(`${prefix}-pill`);
+  if (pill) pill.textContent = URGENCY_LABEL[urgency];
+
+  const metaEl = document.getElementById(`${prefix}-meta`);
+  if (metaEl) {
+    metaEl.innerHTML = `
+      <div class="alert-meta-row">
+        <span class="alert-meta-label">Alert threshold</span>
+        <span class="alert-meta-value">${d.threshold.toLocaleString()} ${unit}</span>
+      </div>
+      <div class="alert-meta-row">
+        <span class="alert-meta-label">Max capacity</span>
+        <span class="alert-meta-value">${d.maxQty.toLocaleString()} ${unit}</span>
+      </div>`;
+  }
+
+  const qtyLabel = document.getElementById(`${prefix}-qty-label`);
+  if (qtyLabel) qtyLabel.textContent = `${d.qty.toLocaleString()} ${unit}`;
+
+  const maxLabel = document.getElementById(`${prefix}-max-label`);
+  if (maxLabel) maxLabel.textContent = `${d.maxQty.toLocaleString()} ${unit}`;
+
+  const bar = document.getElementById(`${prefix}-bar`);
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.style.background = PROGRESS_COLOR[urgency];
+  }
+}
+
+function renderPouchesCard() {
+  const d = loadAlertData().pouches;
+  const urgency = qtyUrgency(d.qty, d.threshold, d.maxQty);
+  const pct = Math.max(0, Math.min(100, (d.qty / d.maxQty) * 100));
+  const dailyProd = d.dailyProd || 0;
+  const daysLeft  = dailyProd > 0 ? Math.floor(d.qty / dailyProd) : null;
+
+  applyUrgency('card-pouches', urgency);
+
+  const pill = document.getElementById('pouches-pill');
+  if (pill) pill.textContent = URGENCY_LABEL[urgency];
+
+  const metaEl = document.getElementById('pouches-meta');
+  if (metaEl) {
+    metaEl.innerHTML = `
+      <div class="alert-meta-row">
+        <span class="alert-meta-label">Alert threshold</span>
+        <span class="alert-meta-value">${d.threshold.toLocaleString()} pouches</span>
+      </div>
+      <div class="alert-meta-row">
+        <span class="alert-meta-label">Max stock</span>
+        <span class="alert-meta-value">${d.maxQty.toLocaleString()} pouches</span>
+      </div>`;
+  }
+
+  const qtyLabel = document.getElementById('pouches-qty-label');
+  if (qtyLabel) qtyLabel.textContent = `${d.qty.toLocaleString()} pouches`;
+
+  const maxLabel = document.getElementById('pouches-max-label');
+  if (maxLabel) maxLabel.textContent = `${d.maxQty.toLocaleString()}`;
+
+  const bar = document.getElementById('pouches-bar');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = PROGRESS_COLOR[urgency]; }
+
+  const prodEl = document.getElementById('pouches-daily-prod');
+  if (prodEl) prodEl.textContent = dailyProd > 0 ? `${dailyProd} L/day` : 'Set below';
+
+  const daysEl = document.getElementById('pouches-days-left');
+  if (daysEl) daysEl.textContent = daysLeft !== null ? `~${daysLeft} days` : '—';
+}
+
+// ── Summary bar ─────────────────────────────────────────────
+function renderAlertsSummary() {
+  const d = loadAlertData();
+  const items = [];
+
+  // Bills
+  ['elec','net'].forEach(p => {
+    const bill = d[p];
+    if (bill.paid) return;
+    const days = daysUntil(bill.deadline);
+    const u = billUrgency(days);
+    if (u !== 'safe') {
+      const name = p === 'elec' ? 'Electricity' : 'Internet';
+      items.push({ label: `${name} bill`, urgency: u });
+    }
+  });
+
+  // Stock
+  [['wanda','Wanda'],['silage','Silage'],['pouches','Pouches']].forEach(([p, name]) => {
+    const s = d[p];
+    const u = qtyUrgency(s.qty, s.threshold, s.maxQty);
+    if (u !== 'safe') items.push({ label: `${name} stock`, urgency: u });
+  });
+
+  const summaryEl = document.getElementById('alertsSummary');
+  if (!summaryEl) return;
+
+  if (items.length === 0) {
+    summaryEl.innerHTML = `<div class="alerts-summary-item">
+      <div class="alerts-summary-dot safe"></div>
+      <span style="font-size:.78rem;color:var(--ink-3)">All clear — no alerts active</span>
+    </div>`;
+  } else {
+    summaryEl.innerHTML = items.map(it => `
+      <div class="alerts-summary-item">
+        <div class="alerts-summary-dot ${it.urgency}"></div>
+        <span style="font-size:.78rem;color:var(--ink-3)">${it.label}</span>
+      </div>`).join('');
+  }
+
+  // Update nav badge
+  const badge = document.getElementById('alertBadge');
+  const dot   = document.getElementById('alertDot');
+  const high  = items.filter(i => i.urgency === 'high' || i.urgency === 'medium').length;
+  if (badge) {
+    badge.style.display = high > 0 ? 'inline' : 'none';
+    badge.textContent = high;
+  }
+  if (dot) dot.style.display = high > 0 ? 'block' : 'none';
+}
+
+// ── Master render ────────────────────────────────────────────
+function renderAlerts() {
+  renderBillCard('elec', 'Electricity Bill');
+  renderBillCard('net',  'Internet Bill');
+  renderQtyCard('wanda',  'kg');
+  renderQtyCard('silage', 'kg');
+  renderPouchesCard();
+  renderAlertsSummary();
+}
+
+// ── Action handlers ──────────────────────────────────────────
+function setElecAmount() {
+  const d = loadAlertData();
+  d.elec.amount = parseFloat(document.getElementById('elec-amount').value) || 0;
+  d.elec.issue    = document.getElementById('elec-issue').value;
+  d.elec.deadline = document.getElementById('elec-deadline').value;
+  d.elec.paid = false;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+function markBillPaid(prefix) {
+  const d = loadAlertData();
+  d[prefix].paid = true;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+function markBillUnpaid(prefix) {
+  const d = loadAlertData();
+  d[prefix].paid = false;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+
+function setNetAmount() {
+  const d = loadAlertData();
+  d.net.amount = parseFloat(document.getElementById('net-amount').value) || 0;
+  d.net.issue    = document.getElementById('net-issue').value;
+  d.net.deadline = document.getElementById('net-deadline').value;
+  d.net.paid = false;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+
+
+function subtractWanda() {
+  const amt = parseFloat(document.getElementById('wanda-sub').value);
+  if (!amt || amt <= 0) return;
+  const d = loadAlertData();
+  d.wanda.qty = Math.max(0, d.wanda.qty - amt);
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('wanda-sub').value = '';
+  renderAlerts();
+}
+function setWanda() {
+  const val = parseFloat(document.getElementById('wanda-set').value);
+  if (isNaN(val) || val < 0) return;
+  const d = loadAlertData();
+  d.wanda.qty = val;
+  if (val > d.wanda.maxQty) d.wanda.maxQty = val;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('wanda-set').value = '';
+  renderAlerts();
+}
+
+function subtractSilage() {
+  const amt = parseFloat(document.getElementById('silage-sub').value);
+  if (!amt || amt <= 0) return;
+  const d = loadAlertData();
+  d.silage.qty = Math.max(0, d.silage.qty - amt);
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('silage-sub').value = '';
+  renderAlerts();
+}
+function setSilage() {
+  const val = parseFloat(document.getElementById('silage-set').value);
+  if (isNaN(val) || val < 0) return;
+  const d = loadAlertData();
+  d.silage.qty = val;
+  if (val > d.silage.maxQty) d.silage.maxQty = val;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('silage-set').value = '';
+  renderAlerts();
+}
+
+function subtractPouches() {
+  const amt = parseFloat(document.getElementById('pouches-sub').value);
+  if (!amt || amt <= 0) return;
+  const d = loadAlertData();
+  d.pouches.qty = Math.max(0, d.pouches.qty - amt);
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('pouches-sub').value = '';
+  renderAlerts();
+}
+function setPouches() {
+  const val = parseFloat(document.getElementById('pouches-set').value);
+  if (isNaN(val) || val < 0) return;
+  const d = loadAlertData();
+  d.pouches.qty = val;
+  if (val > d.pouches.maxQty) d.pouches.maxQty = val;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  document.getElementById('pouches-set').value = '';
+  renderAlerts();
+}
+
+
+function clearWanda() {
+  if (!confirm('Reset Wanda stock to zero? This cannot be undone.')) return;
+  const d = loadAlertData();
+  d.wanda.qty = 0; d.wanda.maxQty = 0;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+function clearSilage() {
+  if (!confirm('Reset Silage stock to zero? This cannot be undone.')) return;
+  const d = loadAlertData();
+  d.silage.qty = 0; d.silage.maxQty = 0;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+function clearPouches() {
+  if (!confirm('Reset Milk Pouches stock to zero? This cannot be undone.')) return;
+  const d = loadAlertData();
+  d.pouches.qty = 0; d.pouches.maxQty = 0;
+  localStorage.setItem(ALERT_KEY, JSON.stringify(d));
+  renderAlerts();
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  EMPLOYEE IDs — fully local, stored in localStorage
+// ═══════════════════════════════════════════════════════════
+
+const EMP_KEY = 'cf_employees_v1';
+let editingEmpId = null;
+
+function loadEmployees() {
+  try { return JSON.parse(localStorage.getItem(EMP_KEY)) || []; }
+  catch(e) { return []; }
+}
+function saveEmployees(list) {
+  localStorage.setItem(EMP_KEY, JSON.stringify(list));
+}
+function genEmpId() {
+  return 'EMP-' + String(Date.now()).slice(-5);
+}
+
+// ── Convert Google Drive share link → direct image URL ──────
+function driveToImg(url) {
+  if (!url) return '';
+  // Format: https://drive.google.com/file/d/FILE_ID/view?...
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w600`;
+  // Already a direct thumbnail link
+  if (url.includes('thumbnail') || url.includes('uc?')) return url;
+  return url;
+}
+
+// ── Initials from name ───────────────────────────────────────
+function initials(name) {
+  return name.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+}
+
+// ── Avatar colour palette ────────────────────────────────────
+const AVATAR_COLORS = [
+  '#1a5c38','#1a5fa8','#7c3aed','#0891b2',
+  '#d97706','#c0392b','#2d6a4f','#1d3557',
+];
+function avatarColor(id) {
+  const hash = [...(id||'')].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+// ── Render all employee cards ────────────────────────────────
+function renderEmployees() {
+  const list = loadEmployees();
+  const grid = document.getElementById('empGrid');
+  const count = document.getElementById('empCount');
+  if (!grid) return;
+
+  if (count) count.textContent = `${list.length} employee${list.length!==1?'s':''}`;
+
+  if (list.length === 0) {
+    grid.innerHTML = `
+      <div class="emp-empty">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="8" width="40" height="32" rx="4"/>
+          <circle cx="18" cy="22" r="5"/>
+          <path d="M8 36c0-5 4.5-8 10-8s10 3 10 8"/>
+          <path d="M30 18h8M30 24h8"/>
+        </svg>
+        <h3 style="font-family:var(--font-display);font-size:1rem;color:var(--ink-3)">No employees added yet</h3>
+        <p>Click "+ Add employee" to create your first employee ID card.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(emp => {
+    const frontImg = driveToImg(emp.cnicFront);
+    const backImg  = driveToImg(emp.cnicBack);
+    const color    = avatarColor(emp.id);
+
+    const cnicSection = `
+      <div class="emp-cnic-section">
+        <div class="emp-cnic-label">CNIC / ID card</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${frontImg
+            ? `<div>
+                <div style="font-size:.68rem;color:var(--ink-4);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em">Front</div>
+                <img class="emp-cnic-img" src="${frontImg}" alt="CNIC Front"
+                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="emp-cnic-placeholder" style="display:none">Image could not load — check the Drive link</div>
+              </div>`
+            : '<div class="emp-cnic-placeholder">No front image added</div>'}
+          ${backImg
+            ? `<div>
+                <div style="font-size:.68rem;color:var(--ink-4);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em">Back</div>
+                <img class="emp-cnic-img" src="${backImg}" alt="CNIC Back"
+                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="emp-cnic-placeholder" style="display:none">Image could not load — check the Drive link</div>
+              </div>`
+            : ''}
+        </div>
+      </div>`;
+
+    return `
+      <div class="emp-card" id="emp-${emp.id}">
+        <div class="emp-card-header">
+          <div class="emp-avatar" style="background:${color}">${initials(emp.name)}</div>
+          <div class="emp-name-block">
+            <div class="emp-name">${emp.name}</div>
+            <div class="emp-designation">${emp.designation || '—'}</div>
+          </div>
+
+        </div>
+        <div class="emp-card-body">
+          ${emp.reference ? `
+          <div class="emp-field">
+            <div class="emp-field-label">Reference</div>
+            <div class="emp-field-value">${emp.reference}</div>
+          </div>` : ''}
+          ${emp.contact2Name || emp.contact2Phone ? `
+          <div class="emp-field">
+            <div class="emp-field-label">Emergency</div>
+            <div class="emp-field-value">
+              ${emp.contact2Name || ''}
+              ${emp.contact2Phone ? `<br><span style="font-size:.78rem;color:var(--ink-3)">${emp.contact2Phone}</span>` : ''}
+            </div>
+          </div>` : ''}
+          ${emp.notes ? `
+          <div class="emp-field">
+            <div class="emp-field-label">Notes</div>
+            <div class="emp-field-value" style="font-style:italic;color:var(--ink-3)">${emp.notes}</div>
+          </div>` : ''}
+          ${cnicSection}
+        </div>
+        <div class="emp-card-footer">
+          <button class="alert-btn neutral" style="flex:1" onclick="editEmployee('${emp.id}')">Edit</button>
+          <button class="alert-btn danger" onclick="deleteEmployee('${emp.id}')">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Modal open/close ─────────────────────────────────────────
+function openEmpModal(id) {
+  editingEmpId = id || null;
+  const overlay = document.getElementById('empModalOverlay');
+  const title   = document.getElementById('empModalTitle');
+
+  // Clear fields
+  ['empName','empDesignation','empReference','empContact2Name',
+   'empContact2Phone','empCnicFront','empCnicBack','empNotes'].forEach(f => {
+    const el = document.getElementById(f);
+    if (el) el.value = '';
+  });
+
+  if (id) {
+    // Populate for edit
+    const emp = loadEmployees().find(e => e.id === id);
+    if (!emp) return;
+    title.textContent = 'Edit Employee';
+    document.getElementById('empName').value          = emp.name || '';
+    document.getElementById('empDesignation').value   = emp.designation || '';
+    document.getElementById('empReference').value     = emp.reference || '';
+    document.getElementById('empContact2Name').value  = emp.contact2Name || '';
+    document.getElementById('empContact2Phone').value = emp.contact2Phone || '';
+    document.getElementById('empCnicFront').value     = emp.cnicFront || '';
+    document.getElementById('empCnicBack').value      = emp.cnicBack || '';
+    document.getElementById('empNotes').value         = emp.notes || '';
+  } else {
+    title.textContent = 'Add Employee';
+  }
+
+  overlay.classList.add('visible');
+  setTimeout(() => document.getElementById('empName').focus(), 80);
+}
+
+function closeEmpModal() {
+  document.getElementById('empModalOverlay').classList.remove('visible');
+  editingEmpId = null;
+}
+
+// Close on overlay background click
+document.getElementById('empModalOverlay')?.addEventListener('click', function(e) {
+  if (e.target === this) closeEmpModal();
+});
+
+// ── Save (add or update) ─────────────────────────────────────
+function saveEmployee() {
+  const name = document.getElementById('empName').value.trim();
+  if (!name) { alert('Please enter the employee name.'); return; }
+
+  const emp = {
+    id:           editingEmpId || genEmpId(),
+    name,
+    designation:  document.getElementById('empDesignation').value.trim(),
+    reference:    document.getElementById('empReference').value.trim(),
+    contact2Name: document.getElementById('empContact2Name').value.trim(),
+    contact2Phone:document.getElementById('empContact2Phone').value.trim(),
+    cnicFront:    document.getElementById('empCnicFront').value.trim(),
+    cnicBack:     document.getElementById('empCnicBack').value.trim(),
+    notes:        document.getElementById('empNotes').value.trim(),
+    createdAt:    editingEmpId ? undefined : new Date().toISOString(),
+  };
+
+  const list = loadEmployees();
+  if (editingEmpId) {
+    const idx = list.findIndex(e => e.id === editingEmpId);
+    if (idx !== -1) {
+      emp.createdAt = list[idx].createdAt;
+      list[idx] = emp;
+    }
+  } else {
+    list.push(emp);
+  }
+
+  saveEmployees(list);
+  closeEmpModal();
+  renderEmployees();
+}
+
+// ── Edit ──────────────────────────────────────────────────────
+function editEmployee(id) {
+  openEmpModal(id);
+}
+
+// ── Delete ────────────────────────────────────────────────────
+function deleteEmployee(id) {
+  const list = loadEmployees();
+  const emp  = list.find(e => e.id === id);
+  if (!emp) return;
+  if (!confirm(`Delete employee record for "${emp.name}"? This cannot be undone.`)) return;
+  saveEmployees(list.filter(e => e.id !== id));
+  renderEmployees();
+}
+
+
+// Run alerts summary on every page load to keep nav badge current
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(renderAlertsSummary, 200);
+});
+
+</script>
+</body>
+</html>
